@@ -1,0 +1,134 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-app);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.header h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.branchList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  overflow: hidden;
+}
+
+.branchRow {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-muted);
+  transition: background-color var(--transition-fast);
+}
+
+.branchRow:last-child {
+  border-bottom: none;
+}
+
+.branchRow:hover {
+  background-color: var(--bg-hover);
+}
+
+.branchRow.current {
+  background-color: var(--bg-active);
+}
+
+.branchIcon {
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  margin-right: var(--space-3);
+  color: var(--text-secondary);
+}
+
+.current .branchIcon {
+  color: var(--green);
+}
+
+.branchInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.branchName {
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.current .branchName {
+  font-weight: var(--font-weight-bold);
+  color: var(--accent);
+}
+
+.branchTracking {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.branchSync {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  margin: 0 var(--space-4);
+  min-width: 60px;
+}
+
+.ahead { color: var(--accent); }
+.behind { color: var(--orange); }
+
+.branchActions {
+  display: flex;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.branchRow:hover .branchActions {
+  opacity: 1;
+}

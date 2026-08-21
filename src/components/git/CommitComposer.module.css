@@ -1,0 +1,68 @@
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stagedCount {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.inputs {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-input);
+  overflow: hidden;
+}
+
+.inputs:focus-within {
+  border-color: var(--accent);
+}
+
+.messageInput {
+  background: transparent;
+  border: none;
+  padding: var(--space-3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  outline: none;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.messageInput::placeholder {
+  color: var(--text-placeholder);
+  font-weight: var(--font-weight-normal);
+}
+
+.descriptionInput {
+  background: transparent;
+  border: none;
+  padding: var(--space-3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.descriptionInput::placeholder {
+  color: var(--text-placeholder);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}

@@ -1,0 +1,128 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.filename {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.additions { color: var(--green); }
+.deletions { color: var(--red); }
+
+.content {
+  flex: 1;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.hunk {
+  display: flex;
+  flex-direction: column;
+}
+
+.hunkHeader {
+  padding: var(--space-1) var(--space-4);
+  background-color: var(--bg-hover);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-muted);
+  border-top: 1px solid var(--border-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.hunk:first-child .hunkHeader {
+  border-top: none;
+}
+
+.hunkLines {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: flex;
+}
+
+.lineNumbers {
+  display: flex;
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  background-color: var(--bg-panel);
+  border-right: 1px solid var(--border-muted);
+  user-select: none;
+}
+
+.oldLine, .newLine {
+  width: 50%;
+  padding: 0 var(--space-2);
+  text-align: right;
+  border-right: 1px solid transparent;
+}
+
+.oldLine {
+  border-right-color: var(--border-muted);
+}
+
+.lineContent {
+  flex: 1;
+  display: flex;
+  padding: 0 var(--space-2);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.linePrefix {
+  width: 20px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Addition Styles */
+.addition {
+  background-color: var(--green-muted);
+}
+.addition .lineNumbers {
+  background-color: var(--green-muted);
+  color: var(--green);
+}
+
+/* Deletion Styles */
+.deletion {
+  background-color: var(--red-muted);
+}
+.deletion .lineNumbers {
+  background-color: var(--red-muted);
+  color: var(--red);
+}
+
+/* Context Styles */
+.context {
+  background-color: transparent;
+}

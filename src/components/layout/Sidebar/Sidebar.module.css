@@ -1,0 +1,199 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Repo Switcher */
+.repoSwitcher {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.repoSwitcher:hover {
+  background-color: var(--bg-hover);
+}
+
+.repoIcon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repoInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.repoName {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repoPath {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.repoSelector {
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+/* Navigation Area */
+.navigation {
+  flex: 1;
+  padding: var(--space-3) 0;
+  overflow-y: auto;
+}
+
+/* Sidebar Section */
+.section {
+  margin-bottom: var(--space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-4);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.sectionHeader:hover {
+  color: var(--text-secondary);
+}
+
+.chevron {
+  font-size: 0.6rem;
+  margin-right: var(--space-2);
+  transition: transform var(--transition-fast);
+}
+
+.chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.sectionTitle {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sectionContent {
+  margin-top: var(--space-1);
+}
+
+/* Nav Items */
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  color: var(--text-secondary);
+  position: relative;
+  transition: background-color var(--transition-fast);
+}
+
+.navItem:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.navItem.active {
+  background-color: var(--bg-active);
+  color: var(--accent-emphasis);
+  font-weight: var(--font-weight-medium);
+}
+
+.navItem.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10%;
+  height: 80%;
+  width: 3px;
+  background-color: var(--accent-emphasis);
+  border-radius: 0 4px 4px 0;
+}
+
+.icon {
+  width: 20px;
+  margin-right: var(--space-3);
+  display: flex;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--text-sm);
+}
+
+.badge {
+  background-color: var(--accent-emphasis);
+  color: white;
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+}
+
+.count {
+  background-color: var(--bg-surface-raised);
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Footer */
+.footer {
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+
+.footerItem {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-2);
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-size: var(--text-sm);
+}
+
+.footerItem:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.footerItem .icon {
+  margin-right: var(--space-2);
+  font-size: 1rem;
+}
