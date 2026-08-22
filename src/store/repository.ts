@@ -12,6 +12,8 @@ interface RepositoryStore extends RepositoryState {
   refreshStatus: () => Promise<void>;
 
   setBranch: (branch: string) => void;
+  createBranch: (name: string) => Promise<boolean>;
+  checkout: (branch: string) => Promise<boolean>;
 
   stageFile: (filePath: string) => Promise<void>;
   unstageFile: (filePath: string) => Promise<void>;
@@ -146,8 +148,31 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
           status: (staged.length + unstaged.length) > 0 ? 'modified' : 'clean' });
   },
 
-  // ── setBranch ────────────────────────────────────────────────────────────────
+  // ── Branch Management ─────────────────────────────────────────────────────────
   setBranch: (branch) => set({ currentBranch: branch }),
+
+  createBranch: async (name: string) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.createBranch(path, name);
+    if (result?.success) {
+      await electronGit.checkout(path, name); // Auto-checkout
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  checkout: async (branch: string) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.checkout(path, branch);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
 
   // ── Stage / Unstage ──────────────────────────────────────────────────────────
   stageFile: async (filePath: string) => {

@@ -8,6 +8,7 @@ import { StatusBar } from './components/layout/StatusBar/StatusBar';
 import { ContextPanel } from './components/layout/ContextPanel/ContextPanel';
 import { CommandPalette } from './components/ui/CommandPalette';
 import { SettingsModal } from './components/ui/SettingsModal';
+import { NewBranchModal } from './components/ui/NewBranchModal';
 import ChangesView from './views/ChangesView';
 import HistoryView from './views/HistoryView';
 import BranchesView from './views/BranchesView';
@@ -112,6 +113,7 @@ export function App() {
       )}
       <CommandPalette />
       <SettingsModal isOpen={modal.type === 'settings'} onClose={closeModal} />
+      <NewBranchModal isOpen={modal.type === 'new-branch'} onClose={closeModal} />
     </>
   );
 }

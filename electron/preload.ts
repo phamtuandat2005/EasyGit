@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('electron', {
     tags:          (path: string)                              => ipcRenderer.invoke('git:tags', path),
     diff:          (path: string, file: string, staged: boolean) => ipcRenderer.invoke('git:diff', path, file, staged),
     currentBranch: (path: string)                              => ipcRenderer.invoke('git:currentBranch', path),
+    createBranch:  (path: string, name: string)                => ipcRenderer.invoke('git:createBranch', path, name),
+    checkout:      (path: string, branch: string)              => ipcRenderer.invoke('git:checkout', path, branch),
     syncStatus:    (path: string)                              => ipcRenderer.invoke('git:syncStatus', path),
     stage:         (path: string, file: string)                => ipcRenderer.invoke('git:stage', path, file),
     unstage:       (path: string, file: string)                => ipcRenderer.invoke('git:unstage', path, file),

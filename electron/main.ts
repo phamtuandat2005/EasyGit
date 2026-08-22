@@ -265,6 +265,28 @@ app.whenReady().then(() => {
     }
   });
 
+  // ── git:createBranch ─────────────────────────────────────────────────────────
+  ipcMain.handle('git:createBranch', async (_, repoPath: string, name: string) => {
+    try {
+      await git(repoPath, ['branch', name]);
+      // Optional: automatically checkout? The user usually expects to checkout after creating,
+      // but 'git branch <name>' just creates it. Let's stick to standard git semantics.
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  // ── git:checkout ─────────────────────────────────────────────────────────────
+  ipcMain.handle('git:checkout', async (_, repoPath: string, branch: string) => {
+    try {
+      await git(repoPath, ['checkout', branch]);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
   // ── git:syncStatus (ahead/behind) ────────────────────────────────────────────
   ipcMain.handle('git:syncStatus', async (_, repoPath: string) => {
     try {

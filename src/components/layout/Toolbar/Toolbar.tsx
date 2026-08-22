@@ -72,7 +72,9 @@ export function Toolbar() {
       <div className={styles.right}>
         <SyncStatus />
         <div className={styles.divider} />
-        <Button variant="primary" size="sm">{t.btnNewBranch}</Button>
+        <Button variant="primary" size="sm" onClick={() => useUIStore.getState().openModal({ type: 'new-branch' })}>
+          {t.btnNewBranch}
+        </Button>
       </div>
     </div>
   );

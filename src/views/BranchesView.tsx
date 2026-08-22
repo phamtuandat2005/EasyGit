@@ -1,16 +1,29 @@
 import React from 'react';
-import { useRepositoryStore } from '../store';
+import { useRepositoryStore, useSettingsStore, useUIStore } from '../store';
+import { TRANSLATIONS } from '../i18n/translations';
 import { Button } from '../components/ui/Button';
 import styles from './BranchesView.module.css';
 
 export default function BranchesView() {
-  const { branches, remoteBranches, currentBranch } = useRepositoryStore();
+  const { branches, remoteBranches, checkout } = useRepositoryStore();
+  const { openModal } = useUIStore();
+  const { settings } = useSettingsStore();
+  const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const [isCheckingOut, setIsCheckingOut] = React.useState(false);
+
+  const handleCheckout = async (branchName: string) => {
+    setIsCheckingOut(true);
+    await checkout(branchName);
+    setIsCheckingOut(false);
+  };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>Branches</h2>
-        <Button variant="primary" icon="+">New Branch</Button>
+        <h2>{t.navBranches || 'Branches'}</h2>
+        <Button variant="primary" icon="+" onClick={() => openModal({ type: 'new-branch' })}>
+          {t.btnNewBranch}
+        </Button>
       </div>
 
       <div className={styles.content}>
@@ -42,7 +55,14 @@ export default function BranchesView() {
                 
                 <div className={styles.branchActions}>
                   {!branch.isCurrent && (
-                    <Button variant="ghost" size="sm">Checkout</Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled={isCheckingOut}
+                      onClick={() => handleCheckout(branch.name)}
+                    >
+                      Checkout
+                    </Button>
                   )}
                   <Button variant="ghost" size="sm">...</Button>
                 </div>
@@ -61,7 +81,15 @@ export default function BranchesView() {
                   <div className={styles.branchName}>{branch.name}</div>
                 </div>
                 <div className={styles.branchActions}>
-                  <Button variant="ghost" size="sm">Checkout</Button>
+                  {/* Remote branches often require checkout to a local branch, simplifed here for now */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    disabled={isCheckingOut}
+                    onClick={() => handleCheckout(branch.name)}
+                  >
+                    Checkout
+                  </Button>
                 </div>
               </div>
             ))}

@@ -15,6 +15,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
     tags: (path) => electron.ipcRenderer.invoke("git:tags", path),
     diff: (path, file, staged) => electron.ipcRenderer.invoke("git:diff", path, file, staged),
     currentBranch: (path) => electron.ipcRenderer.invoke("git:currentBranch", path),
+    createBranch: (path, name) => electron.ipcRenderer.invoke("git:createBranch", path, name),
+    checkout: (path, branch) => electron.ipcRenderer.invoke("git:checkout", path, branch),
     syncStatus: (path) => electron.ipcRenderer.invoke("git:syncStatus", path),
     stage: (path, file) => electron.ipcRenderer.invoke("git:stage", path, file),
     unstage: (path, file) => electron.ipcRenderer.invoke("git:unstage", path, file),
