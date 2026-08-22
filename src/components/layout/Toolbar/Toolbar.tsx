@@ -13,12 +13,30 @@ const IconLayoutSidebar = () => (
   </svg>
 );
 
+const IconRefresh = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10"/>
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+  </svg>
+);
+
 export function Toolbar() {
-  const { path, push, pull, fetch } = useRepositoryStore();
+  const { path, push, pull, fetch, refreshStatus } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const { sidebarCollapsed, toggleSidebar, addToast } = useUIStore();
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+
+  // ── Auto-refresh on window focus ─────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!path) return;
+    const onFocus = () => {
+      refreshStatus();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [path, refreshStatus]);
 
   if (!path) return <div className={styles.toolbar}></div>;
 
@@ -41,6 +59,12 @@ export function Toolbar() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshStatus();
+    setIsRefreshing(false);
+  };
+
   return (
     <div className={styles.toolbar}>
       <div className={styles.left}>
@@ -58,6 +82,16 @@ export function Toolbar() {
               <div className={styles.divider} />
             </>
           )}
+          <button
+            className={`${styles.refreshBtn} ${isRefreshing ? styles.spinning : ''}`}
+            onClick={handleRefresh}
+            title="Refresh status (F5)"
+            disabled={isRefreshing}
+            aria-label="Refresh"
+          >
+            <IconRefresh />
+          </button>
+          <div className={styles.divider} />
           <Button variant="ghost" size="sm" icon="📥" onClick={() => handleNetworkAction('pull')} disabled={isSyncing}>{t.btnPull}</Button>
           <Button variant="ghost" size="sm" icon="📤" onClick={() => handleNetworkAction('push')} disabled={isSyncing}>{t.btnPush}</Button>
           <Button variant="ghost" size="sm" icon="🔄" onClick={() => handleNetworkAction('fetch')} disabled={isSyncing}>{t.btnFetch}</Button>
