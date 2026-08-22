@@ -15,6 +15,32 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
   const sidebarCollapsed = useUIStore(s => s.sidebarCollapsed);
   const isPanelOpen = !!selectedFile && !!contextPanel;
 
+  const [panelWidth, setPanelWidth] = React.useState(500);
+  const isResizing = React.useRef(false);
+
+  const handleMouseMove = React.useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return;
+    const newWidth = document.body.clientWidth - e.clientX;
+    if (newWidth > 300 && newWidth < 1000) {
+      setPanelWidth(newWidth);
+    }
+  }, []);
+
+  const stopResizing = React.useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'default';
+  }, [handleMouseMove]);
+
+  const startResizing = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'col-resize';
+  }, [handleMouseMove, stopResizing]);
+
   return (
     <div className={styles.container}>
       <div className={sidebarCollapsed ? styles.sidebarHidden : styles.sidebar}>
@@ -28,9 +54,20 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
           <div className={styles.content}>
             {children}
           </div>
-          <div className={isPanelOpen ? styles.contextPanel : styles.contextPanelHidden}>
-            {contextPanel}
-          </div>
+          {isPanelOpen && (
+            <>
+              <div 
+                className={styles.resizer} 
+                onMouseDown={startResizing}
+              />
+              <div 
+                className={styles.contextPanel} 
+                style={{ width: `${panelWidth}px` }}
+              >
+                {contextPanel}
+              </div>
+            </>
+          )}
         </div>
         <div className={styles.statusbar}>
           {statusbar}

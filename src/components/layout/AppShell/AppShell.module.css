@@ -62,14 +62,24 @@
 }
 
 .contextPanel {
-  width: var(--context-panel-width);
   flex-shrink: 0;
-  border-left: 1px solid var(--border-default);
   background-color: var(--bg-panel);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width var(--transition-normal);
+}
+
+.resizer {
+  width: 4px;
+  cursor: col-resize;
+  background-color: var(--border-default);
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background-color 150ms;
+}
+
+.resizer:hover, .resizer:active {
+  background-color: var(--accent-emphasis);
 }
 
 .contextPanelHidden {

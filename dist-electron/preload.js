@@ -23,7 +23,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
     commit: (path, message) => electron.ipcRenderer.invoke("git:commit", path, message),
     push: (path) => electron.ipcRenderer.invoke("git:push", path),
     pull: (path) => electron.ipcRenderer.invoke("git:pull", path),
-    fetch: (path) => electron.ipcRenderer.invoke("git:fetch", path)
+    fetch: (path) => electron.ipcRenderer.invoke("git:fetch", path),
+    init: (path) => electron.ipcRenderer.invoke("git:init", path),
+    clone: (url, destination) => electron.ipcRenderer.invoke("git:clone", url, destination)
   },
   // Menu → Renderer listeners
   onMenuAction: (cb) => {
@@ -35,5 +37,10 @@ electron.contextBridge.exposeInMainWorld("electron", {
     const h = (_, p) => cb(p);
     electron.ipcRenderer.on("open-repository", h);
     return () => electron.ipcRenderer.removeListener("open-repository", h);
+  },
+  onInitRepository: (cb) => {
+    const h = (_, p) => cb(p);
+    electron.ipcRenderer.on("init-repository", h);
+    return () => electron.ipcRenderer.removeListener("init-repository", h);
   }
 });

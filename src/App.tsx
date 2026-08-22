@@ -56,6 +56,13 @@ export function App() {
         case 'settings':        openModal({ type: 'settings' }); break;
         case 'command-palette': openModal({ type: 'command-palette' }); break;
         case 'about':           openModal({ type: 'settings' }); break;
+        case 'clone':
+          // If path is set (user is in a repo), we could open a modal or just let them use Welcome screen 
+          // For now, if they are already in a repo and want to clone, we can clear the path to go to Welcome View
+          // or we can implement a separate modal. Easiest is to clear path.
+          useRepositoryStore.setState({ path: null, repoError: null });
+          // Note: The WelcomeView handles the 'clone' UX now.
+          break;
       }
     });
 
@@ -63,9 +70,20 @@ export function App() {
       await loadRepository(repoPath);
     });
 
+    const unsubscribeInit = (window as any).electron?.onInitRepository?.(async (repoPath: string) => {
+      const electron = (window as any).electron;
+      if (electron) {
+        const result = await electron.git.init(repoPath);
+        if (result.success) {
+          await loadRepository(repoPath);
+        }
+      }
+    });
+
     return () => {
       unsubscribeMenu?.();
       unsubscribeOpen?.();
+      unsubscribeInit?.();
     };
   }, []);
 

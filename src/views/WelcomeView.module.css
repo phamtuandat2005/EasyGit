@@ -95,6 +95,47 @@
   cursor: not-allowed;
 }
 
+/* Clone form */
+.cloneForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.cloneInputWrapper {
+  width: 100%;
+}
+
+.cloneInput {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-input, #1e1e1e);
+  border: 1px solid var(--border-default, #3c3c3c);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.cloneInput:focus {
+  border-color: #0f629c;
+}
+
+.cloneActions {
+  display: flex;
+  gap: 12px;
+}
+
+.cloneActions .primaryBtn {
+  flex: 1;
+}
+
+.cloneActions .secondaryBtn {
+  flex: 1;
+}
+
 /* Error */
 .error {
   display: flex;

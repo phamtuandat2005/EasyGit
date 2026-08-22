@@ -28,6 +28,22 @@ function buildMenu() {
       label: 'File',
       submenu: [
         {
+          label: 'New Repository...',
+          accelerator: 'CmdOrCtrl+N',
+          click: async () => {
+            if (!win) return;
+            const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+              properties: ['openDirectory'],
+              title: 'Initialize Git Repository',
+            });
+            if (!canceled && filePaths[0]) {
+              win.webContents.send('menu-action', 'init-repo');
+              // We'll need to pass the path as well, so let's send a custom event or include the path
+              win.webContents.send('init-repository', filePaths[0]);
+            }
+          }
+        },
+        {
           label: 'Open Repository...',
           accelerator: 'CmdOrCtrl+O',
           click: async () => {
@@ -315,6 +331,24 @@ app.whenReady().then(() => {
   ipcMain.handle('git:fetch', async (_, repoPath: string) => {
     try {
       await git(repoPath, ['fetch', '--all']);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:init ────────────────────────────────────────────────────────────────
+  ipcMain.handle('git:init', async (_, repoPath: string) => {
+    try {
+      await git(repoPath, ['init']);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:clone ──────────────────────────────────────────────────────────────
+  ipcMain.handle('git:clone', async (_, url: string, destination: string) => {
+    try {
+      // Execute git clone in the parent directory of the destination
+      // Using 'clone', url, destination path
+      await git(process.cwd(), ['clone', url, destination]);
       return { success: true };
     } catch (e: any) { return { success: false, error: e.message }; }
   });

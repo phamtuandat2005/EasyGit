@@ -17,6 +17,10 @@ function addRecent(path: string) {
 export function WelcomeView() {
   const { loadRepository, isLoadingRepo, repoError } = useRepositoryStore();
   const [recents] = useState(getRecents);
+  const [isCloningMode, setIsCloningMode] = useState(false);
+  const [cloneUrl, setCloneUrl] = useState('');
+  const [isCloning, setIsCloning] = useState(false);
+  const [cloneError, setCloneError] = useState<string | null>(null);
 
   const handleOpen = async () => {
     const electron = (window as any).electron;
@@ -29,6 +33,50 @@ export function WelcomeView() {
   const handleOpenRecent = async (path: string) => {
     const ok = await loadRepository(path);
     if (ok) addRecent(path);
+  };
+
+  const handleClone = async () => {
+    if (!cloneUrl.trim()) return;
+    setCloneError(null);
+
+    const electron = (window as any).electron;
+    let destPath: string | null = await electron?.openDirectory();
+    
+    if (!destPath) return; // User cancelled
+
+    // Extract repo name from URL to append to destPath
+    // e.g. https://github.com/user/repo.git -> repo
+    let repoName = cloneUrl.trim().split('/').pop() || 'repo';
+    if (repoName.endsWith('.git')) {
+      repoName = repoName.slice(0, -4);
+    }
+    
+    // Clean up trailing slash from destPath if it exists (e.g. T:\ or /home/user/)
+    const separator = destPath.includes('\\') ? '\\' : '/';
+    if (destPath.endsWith(separator)) {
+      destPath = destPath + repoName;
+    } else {
+      destPath = destPath + separator + repoName;
+    }
+
+    setIsCloning(true);
+    try {
+      const result = await electron?.git.clone(cloneUrl.trim(), destPath);
+      if (result?.success) {
+        const ok = await loadRepository(destPath);
+        if (ok) {
+          addRecent(destPath);
+        } else {
+          setCloneError('Clone thành công nhưng không thể tải repository.');
+        }
+      } else {
+        setCloneError(result?.error || 'Clone failed');
+      }
+    } catch (e: any) {
+      setCloneError(e.message || 'Clone failed');
+    } finally {
+      setIsCloning(false);
+    }
   };
 
   return (
@@ -44,28 +92,62 @@ export function WelcomeView() {
 
         {/* Actions */}
         <div className={styles.actions}>
-          <button className={styles.primaryBtn} onClick={handleOpen} disabled={isLoadingRepo}>
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/>
-            </svg>
-            {isLoadingRepo ? 'Đang tải...' : 'Open Folder'}
-          </button>
+          {!isCloningMode ? (
+            <>
+              <button className={styles.primaryBtn} onClick={handleOpen} disabled={isLoadingRepo}>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/>
+                </svg>
+                {isLoadingRepo ? 'Đang tải...' : 'Open Folder'}
+              </button>
 
-          <button className={styles.secondaryBtn} onClick={() => {}} disabled>
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0zM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0z"/>
-            </svg>
-            Clone Repository
-          </button>
+              <button className={styles.secondaryBtn} onClick={() => setIsCloningMode(true)} disabled={isLoadingRepo}>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0zM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0z"/>
+                </svg>
+                Clone Repository
+              </button>
+            </>
+          ) : (
+            <div className={styles.cloneForm}>
+              <div className={styles.cloneInputWrapper}>
+                <input 
+                  type="text" 
+                  className={styles.cloneInput} 
+                  placeholder="Nhập URL repository (VD: https://github.com/...)" 
+                  value={cloneUrl}
+                  onChange={(e) => setCloneUrl(e.target.value)}
+                  disabled={isCloning}
+                  autoFocus
+                />
+              </div>
+              <div className={styles.cloneActions}>
+                <button 
+                  className={styles.primaryBtn} 
+                  onClick={handleClone} 
+                  disabled={!cloneUrl.trim() || isCloning}
+                >
+                  {isCloning ? 'Đang Clone...' : 'Chọn thư mục và Clone'}
+                </button>
+                <button 
+                  className={styles.secondaryBtn} 
+                  onClick={() => setIsCloningMode(false)} 
+                  disabled={isCloning}
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error */}
-        {repoError && (
+        {(repoError || cloneError) && (
           <div className={styles.error}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.5h1.5v5h-1.5v-5zm.75 7a.875.875 0 1 1 0-1.75A.875.875 0 0 1 8 11.5z"/>
             </svg>
-            {repoError}
+            {repoError || cloneError}
           </div>
         )}
 

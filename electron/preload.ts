@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld('electron', {
     push:          (path: string)                              => ipcRenderer.invoke('git:push', path),
     pull:          (path: string)                              => ipcRenderer.invoke('git:pull', path),
     fetch:         (path: string)                              => ipcRenderer.invoke('git:fetch', path),
+    init:          (path: string)                              => ipcRenderer.invoke('git:init', path),
+    clone:         (url: string, destination: string)          => ipcRenderer.invoke('git:clone', url, destination),
   },
 
   // Menu → Renderer listeners
@@ -38,5 +40,10 @@ contextBridge.exposeInMainWorld('electron', {
     const h = (_: Electron.IpcRendererEvent, p: string) => cb(p);
     ipcRenderer.on('open-repository', h);
     return () => ipcRenderer.removeListener('open-repository', h);
+  },
+  onInitRepository: (cb: (path: string) => void) => {
+    const h = (_: Electron.IpcRendererEvent, p: string) => cb(p);
+    ipcRenderer.on('init-repository', h);
+    return () => ipcRenderer.removeListener('init-repository', h);
   },
 });
