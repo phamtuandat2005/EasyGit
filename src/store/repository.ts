@@ -23,6 +23,8 @@ interface RepositoryStore extends RepositoryState {
   push: () => Promise<boolean>;
   pull: () => Promise<boolean>;
   fetch: () => Promise<boolean>;
+  stash: () => Promise<boolean>;
+  undoCommit: () => Promise<boolean>;
 
   selectCommit: (hash: string | null) => void;
   selectedCommitHash: string | null;
@@ -281,6 +283,30 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const result = await electronGit.fetch(path);
     if (result?.success) {
       await get().refreshStatus();
+      return true;
+    }
+    return false;
+  },
+
+  stash: async () => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.stash(path);
+    if (result?.success) {
+      await get().refreshStatus();
+      // Wait, we need to refresh stashes too. The easiest is loadRepository or just fetch stashes.
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  undoCommit: async () => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.undoCommit(path);
+    if (result?.success) {
+      await get().loadRepository(path);
       return true;
     }
     return false;

@@ -73,6 +73,25 @@ export function CommitComposer() {
       </div>
       
       <div className={styles.actions}>
+        <div style={{ flex: 1 }}>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={async () => {
+              if (window.confirm('Are you sure you want to undo the last commit? Your changes will be kept in the working directory.')) {
+                setIsCommitting(true);
+                const ok = await useRepositoryStore.getState().undoCommit();
+                if (ok) addToast({ type: 'success', title: 'Undo successful' });
+                else addToast({ type: 'error', title: 'Undo failed' });
+                setIsCommitting(false);
+              }
+            }}
+            disabled={isCommitting || useRepositoryStore.getState().commits.length === 0}
+            title="Undo Last Commit (Keep changes)"
+          >
+            ↩️ Undo
+          </Button>
+        </div>
         <Button 
           variant="primary" 
           disabled={!isReady}

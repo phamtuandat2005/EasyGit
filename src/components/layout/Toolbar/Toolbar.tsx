@@ -22,13 +22,14 @@ export function Toolbar() {
 
   if (!path) return <div className={styles.toolbar}></div>;
 
-  const handleNetworkAction = async (action: 'push' | 'pull' | 'fetch') => {
+  const handleNetworkAction = async (action: 'push' | 'pull' | 'fetch' | 'stash') => {
     setIsSyncing(true);
     let ok = false;
     try {
       if (action === 'push') ok = await push();
       else if (action === 'pull') ok = await pull();
       else if (action === 'fetch') ok = await fetch();
+      else if (action === 'stash') ok = await useRepositoryStore.getState().stash();
       
       if (ok) {
         addToast({ type: 'success', title: `${action} successful` });
@@ -61,7 +62,7 @@ export function Toolbar() {
           <Button variant="ghost" size="sm" icon="📤" onClick={() => handleNetworkAction('push')} disabled={isSyncing}>{t.btnPush}</Button>
           <Button variant="ghost" size="sm" icon="🔄" onClick={() => handleNetworkAction('fetch')} disabled={isSyncing}>{t.btnFetch}</Button>
           <div className={styles.divider} />
-          <Button variant="ghost" size="sm" icon="📦">{t.btnStash}</Button>
+          <Button variant="ghost" size="sm" icon="📦" onClick={() => handleNetworkAction('stash')} disabled={isSyncing}>{t.btnStash}</Button>
         </div>
       </div>
       

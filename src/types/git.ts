@@ -104,7 +104,7 @@ export interface GitFileDiff {
 export type RepositoryStatus = 'clean' | 'modified' | 'conflict' | 'rebasing' | 'merging' | 'detached';
 
 export interface RepositoryState {
-  path: string;
+  path: string | null;
   name: string;
   currentBranch: string;
   status: RepositoryStatus;

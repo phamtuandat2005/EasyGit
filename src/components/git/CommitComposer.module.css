@@ -25,19 +25,21 @@
 }
 
 .inputs:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-primary);
 }
 
 .messageInput {
   background: transparent;
   border: none;
+  border-bottom: 1px solid var(--border-muted);
   padding: var(--space-3);
   color: var(--text-primary);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
   outline: none;
-  border-bottom: 1px solid var(--border-muted);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .messageInput::placeholder {
@@ -53,8 +55,10 @@
   font-family: inherit;
   font-size: var(--text-sm);
   outline: none;
-  resize: vertical;
-  min-height: 60px;
+  resize: none;
+  min-height: 56px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .descriptionInput::placeholder {

@@ -30,6 +30,8 @@ contextBridge.exposeInMainWorld('electron', {
     fetch:         (path: string)                              => ipcRenderer.invoke('git:fetch', path),
     init:          (path: string)                              => ipcRenderer.invoke('git:init', path),
     clone:         (url: string, destination: string)          => ipcRenderer.invoke('git:clone', url, destination),
+    stash:         (path: string)                              => ipcRenderer.invoke('git:stash', path),
+    undoCommit:    (path: string)                              => ipcRenderer.invoke('git:undoCommit', path),
   },
 
   // Menu → Renderer listeners

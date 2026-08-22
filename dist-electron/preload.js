@@ -27,7 +27,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
     pull: (path) => electron.ipcRenderer.invoke("git:pull", path),
     fetch: (path) => electron.ipcRenderer.invoke("git:fetch", path),
     init: (path) => electron.ipcRenderer.invoke("git:init", path),
-    clone: (url, destination) => electron.ipcRenderer.invoke("git:clone", url, destination)
+    clone: (url, destination) => electron.ipcRenderer.invoke("git:clone", url, destination),
+    stash: (path) => electron.ipcRenderer.invoke("git:stash", path),
+    undoCommit: (path) => electron.ipcRenderer.invoke("git:undoCommit", path)
   },
   // Menu → Renderer listeners
   onMenuAction: (cb) => {

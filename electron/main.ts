@@ -374,4 +374,19 @@ app.whenReady().then(() => {
       return { success: true };
     } catch (e: any) { return { success: false, error: e.message }; }
   });
+
+  // ── git:stash / undo ────────────────────────────────────────────────────────
+  ipcMain.handle('git:stash', async (_, repoPath: string) => {
+    try {
+      await git(repoPath, ['stash']);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('git:undoCommit', async (_, repoPath: string) => {
+    try {
+      await git(repoPath, ['reset', 'HEAD~1']);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
 });

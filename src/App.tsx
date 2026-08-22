@@ -41,9 +41,11 @@ export function App() {
     registerCommand({ id: 'view:branches', label: 'Show Branches', category: 'Navigation', action: () => setActiveView('branches') });
     registerCommand({ id: 'view:stash', label: 'Show Stash', category: 'Navigation', action: () => setActiveView('stash') });
     registerCommand({ id: 'app:settings', label: 'Open Settings', category: 'Application', action: () => openModal({ type: 'settings' }) });
-    registerCommand({ id: 'git:fetch', label: 'Fetch', category: 'Git', action: () => console.log('Fetch') });
-    registerCommand({ id: 'git:pull', label: 'Pull', category: 'Git', action: () => console.log('Pull') });
-    registerCommand({ id: 'git:push', label: 'Push', category: 'Git', action: () => console.log('Push') });
+    registerCommand({ id: 'git:fetch', label: 'Fetch', category: 'Git', action: () => useRepositoryStore.getState().fetch() });
+    registerCommand({ id: 'git:pull', label: 'Pull', category: 'Git', action: () => useRepositoryStore.getState().pull() });
+    registerCommand({ id: 'git:push', label: 'Push', category: 'Git', action: () => useRepositoryStore.getState().push() });
+    registerCommand({ id: 'git:stash', label: 'Stash', category: 'Git', action: () => useRepositoryStore.getState().stash() });
+    registerCommand({ id: 'git:undo', label: 'Undo Last Commit', category: 'Git', action: () => useRepositoryStore.getState().undoCommit() });
   }, []);
 
   // Listen to native menu bar actions from Electron main process
