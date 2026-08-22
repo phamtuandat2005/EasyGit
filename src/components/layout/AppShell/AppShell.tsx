@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRepositoryStore } from '../../../store';
+import { useRepositoryStore, useUIStore } from '../../../store';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -12,11 +12,12 @@ interface AppShellProps {
 
 export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }: AppShellProps) {
   const selectedFile = useRepositoryStore(s => s.selectedFile);
+  const sidebarCollapsed = useUIStore(s => s.sidebarCollapsed);
   const isPanelOpen = !!selectedFile && !!contextPanel;
 
   return (
     <div className={styles.container}>
-      <div className={styles.sidebar}>
+      <div className={sidebarCollapsed ? styles.sidebarHidden : styles.sidebar}>
         {sidebar}
       </div>
       <div className={styles.main}>

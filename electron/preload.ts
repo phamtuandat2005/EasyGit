@@ -8,22 +8,35 @@ contextBridge.exposeInMainWorld('electron', {
 
   // Git IPC
   git: {
-    status:  (repoPath: string)                  => ipcRenderer.invoke('git:status', repoPath),
-    log:     (repoPath: string, maxCount?: number) => ipcRenderer.invoke('git:log', repoPath, maxCount),
-    diff:    (repoPath: string, file?: string)    => ipcRenderer.invoke('git:diff', repoPath, file),
+    openRepo:      (path: string)                              => ipcRenderer.invoke('git:openRepo', path),
+    log:           (path: string, maxCount?: number)           => ipcRenderer.invoke('git:log', path, maxCount),
+    status:        (path: string)                              => ipcRenderer.invoke('git:status', path),
+    branches:      (path: string)                              => ipcRenderer.invoke('git:branches', path),
+    stashes:       (path: string)                              => ipcRenderer.invoke('git:stashes', path),
+    remotes:       (path: string)                              => ipcRenderer.invoke('git:remotes', path),
+    tags:          (path: string)                              => ipcRenderer.invoke('git:tags', path),
+    diff:          (path: string, file: string, staged: boolean) => ipcRenderer.invoke('git:diff', path, file, staged),
+    currentBranch: (path: string)                              => ipcRenderer.invoke('git:currentBranch', path),
+    syncStatus:    (path: string)                              => ipcRenderer.invoke('git:syncStatus', path),
+    stage:         (path: string, file: string)                => ipcRenderer.invoke('git:stage', path, file),
+    unstage:       (path: string, file: string)                => ipcRenderer.invoke('git:unstage', path, file),
+    stageAll:      (path: string)                              => ipcRenderer.invoke('git:stageAll', path),
+    unstageAll:    (path: string)                              => ipcRenderer.invoke('git:unstageAll', path),
+    commit:        (path: string, message: string)             => ipcRenderer.invoke('git:commit', path, message),
+    push:          (path: string)                              => ipcRenderer.invoke('git:push', path),
+    pull:          (path: string)                              => ipcRenderer.invoke('git:pull', path),
+    fetch:         (path: string)                              => ipcRenderer.invoke('git:fetch', path),
   },
 
-  // Menu action listener (main → renderer)
-  onMenuAction: (callback: (action: string) => void) => {
-    const handler = (_: Electron.IpcRendererEvent, action: string) => callback(action);
-    ipcRenderer.on('menu-action', handler);
-    return () => ipcRenderer.removeListener('menu-action', handler);
+  // Menu → Renderer listeners
+  onMenuAction: (cb: (action: string) => void) => {
+    const h = (_: Electron.IpcRendererEvent, a: string) => cb(a);
+    ipcRenderer.on('menu-action', h);
+    return () => ipcRenderer.removeListener('menu-action', h);
   },
-
-  // Open repository from menu
-  onOpenRepository: (callback: (path: string) => void) => {
-    const handler = (_: Electron.IpcRendererEvent, path: string) => callback(path);
-    ipcRenderer.on('open-repository', handler);
-    return () => ipcRenderer.removeListener('open-repository', handler);
+  onOpenRepository: (cb: (path: string) => void) => {
+    const h = (_: Electron.IpcRendererEvent, p: string) => cb(p);
+    ipcRenderer.on('open-repository', h);
+    return () => ipcRenderer.removeListener('open-repository', h);
   },
 });

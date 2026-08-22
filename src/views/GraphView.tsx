@@ -10,13 +10,11 @@ function computeGraphData(commits: GitCommit[]): GraphData {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   
-  const branchColumns: Record<string, number> = {};
   const activeBranches: string[] = [];
   let maxCol = 0;
 
-  // Simple sequential assignment for demo purposes
+  // First pass: Assign nodes to columns (simplified by author for demo)
   commits.forEach((commit, rowIndex) => {
-    // Assign column based on author (just for visual variety in demo)
     let col = activeBranches.indexOf(commit.author);
     if (col === -1) {
       col = activeBranches.length;
@@ -25,25 +23,30 @@ function computeGraphData(commits: GitCommit[]): GraphData {
     
     maxCol = Math.max(maxCol, col);
     
-    const color = stringToColor(commit.author);
-    
     nodes.push({
       commit,
       row: rowIndex,
       column: col,
-      color,
+      color: stringToColor(commit.author),
     });
+  });
 
-    // Draw edges to parents (simplified)
-    commit.parentHashes.forEach((parentHash, i) => {
-      const parentIndex = commits.findIndex(c => c.hash === parentHash);
+  // Second pass: Draw edges
+  nodes.forEach(node => {
+    node.commit.parentHashes.forEach((parentHash, i) => {
+      // Find parent by full hash or short hash (mock data uses short hashes for parents)
+      const parentIndex = nodes.findIndex(n => 
+        n.commit.hash.startsWith(parentHash) || n.commit.shortHash === parentHash
+      );
+      
       if (parentIndex !== -1) {
+        const parentNode = nodes[parentIndex];
         edges.push({
-          fromRow: rowIndex,
-          fromCol: col,
-          toRow: parentIndex,
-          toCol: col, // Simplified straight line for demo
-          color,
+          fromRow: node.row,
+          fromCol: node.column,
+          toRow: parentNode.row,
+          toCol: parentNode.column,
+          color: node.color,
           isMerge: i > 0,
         });
       }

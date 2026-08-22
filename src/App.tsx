@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { useUIStore, useCommandStore, useSettingsStore, applyAppearanceToDOM } from './store';
+import { useUIStore, useCommandStore, useSettingsStore, useRepositoryStore, applyAppearanceToDOM } from './store';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppShell } from './components/layout/AppShell/AppShell';
 import { Sidebar } from './components/layout/Sidebar/Sidebar';
@@ -13,11 +13,8 @@ import HistoryView from './views/HistoryView';
 import BranchesView from './views/BranchesView';
 import GraphView from './views/GraphView';
 import StashView from './views/StashView';
+import { WelcomeView } from './views/WelcomeView';
 import styles from './App.module.css';
-
-// Lazy loaded views (to be created)
-// ...
-
 
 export function App() {
   useKeyboardShortcuts();
@@ -29,6 +26,7 @@ export function App() {
   const closeModal = useUIStore(s => s.closeModal);
   const modal = useUIStore(s => s.modal);
   
+  const { path, loadRepository } = useRepositoryStore();
   const { settings } = useSettingsStore();
 
   useEffect(() => {
@@ -49,7 +47,7 @@ export function App() {
 
   // Listen to native menu bar actions from Electron main process
   useEffect(() => {
-    const unsubscribe = (window as any).electron?.onMenuAction?.((action: string) => {
+    const unsubscribeMenu = (window as any).electron?.onMenuAction?.((action: string) => {
       switch (action) {
         case 'view:changes':    setActiveView('changes'); break;
         case 'view:history':    setActiveView('history'); break;
@@ -60,28 +58,40 @@ export function App() {
         case 'about':           openModal({ type: 'settings' }); break;
       }
     });
-    return () => unsubscribe?.();
+
+    const unsubscribeOpen = (window as any).electron?.onOpenRepository?.(async (repoPath: string) => {
+      await loadRepository(repoPath);
+    });
+
+    return () => {
+      unsubscribeMenu?.();
+      unsubscribeOpen?.();
+    };
   }, []);
 
   return (
     <>
-      <AppShell
-        sidebar={<Sidebar />}
-        toolbar={<Toolbar />}
-        statusbar={<StatusBar />}
-        contextPanel={<ContextPanel />}
-      >
-        <Suspense fallback={<div className="skeleton" style={{ width: '100%', height: '100%' }} />}>
-          {activeView === 'changes' && <ChangesView />}
-          {activeView === 'history' && <HistoryView />}
-          {activeView === 'branches' && <BranchesView />}
-          {activeView === 'graph' && <GraphView />}
-          {activeView === 'stash' && <StashView />}
-          {activeView !== 'changes' && activeView !== 'history' && activeView !== 'branches' && activeView !== 'graph' && activeView !== 'stash' && (
-            <div style={{ padding: '20px' }}>Content for view: {activeView}</div>
-          )}
-        </Suspense>
-      </AppShell>
+      {!path ? (
+        <WelcomeView />
+      ) : (
+        <AppShell
+          sidebar={<Sidebar />}
+          toolbar={<Toolbar />}
+          statusbar={<StatusBar />}
+          contextPanel={<ContextPanel />}
+        >
+          <Suspense fallback={<div className="skeleton" style={{ width: '100%', height: '100%' }} />}>
+            {activeView === 'changes' && <ChangesView />}
+            {activeView === 'history' && <HistoryView />}
+            {activeView === 'branches' && <BranchesView />}
+            {activeView === 'graph' && <GraphView />}
+            {activeView === 'stash' && <StashView />}
+            {activeView !== 'changes' && activeView !== 'history' && activeView !== 'branches' && activeView !== 'graph' && activeView !== 'stash' && (
+              <div style={{ padding: '20px' }}>Content for view: {activeView}</div>
+            )}
+          </Suspense>
+        </AppShell>
+      )}
       <CommandPalette />
       <SettingsModal isOpen={modal.type === 'settings'} onClose={closeModal} />
     </>

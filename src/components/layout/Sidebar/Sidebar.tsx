@@ -57,15 +57,22 @@ const IconChevron = ({ expanded }: { expanded: boolean }) => (
 );
 
 // ─── Section Component ────────────────────────────────────────────────────────
-function Section({ title, children, defaultExpanded = false }: {
-  title: string; children: React.ReactNode; defaultExpanded?: boolean;
+function Section({ title, children, defaultExpanded = false, rightAction }: {
+  title: string; children: React.ReactNode; defaultExpanded?: boolean; rightAction?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader} onClick={() => setExpanded(!expanded)}>
-        <IconChevron expanded={expanded} />
-        <span className={styles.sectionTitle}>{title}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+          <IconChevron expanded={expanded} />
+          <span className={styles.sectionTitle}>{title}</span>
+        </div>
+        {rightAction && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {rightAction}
+          </div>
+        )}
       </div>
       {expanded && <div className={styles.sectionItems}>{children}</div>}
     </div>
@@ -87,9 +94,16 @@ function NavItem({ icon, label, active, badge, count, onClick }: {
   );
 }
 
+// ─── SVG Icon for Layout Toggle ──────────────────────────────────────────────
+const IconLayoutSidebar = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    <path fillRule="evenodd" clipRule="evenodd" d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm1 0h3v10H3V3zm4 10h6V3H7v10z"/>
+  </svg>
+);
+
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 export function Sidebar() {
-  const { activeView, setActiveView, openModal } = useUIStore();
+  const { activeView, setActiveView, openModal, toggleSidebar } = useUIStore();
   const { stagedChanges, unstagedChanges, commits, branches, stashes } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
@@ -100,7 +114,15 @@ export function Sidebar() {
     <div className={styles.sidebar}>
       {/* Navigation */}
       <div className={styles.navigation}>
-        <Section title={t.navWorkspace} defaultExpanded>
+        <Section 
+          title={t.navWorkspace} 
+          defaultExpanded 
+          rightAction={
+            <button className={styles.toggleBtn} onClick={toggleSidebar} title="Close Sidebar" style={{ margin: 0, padding: 0, width: 20, height: 20 }}>
+              <IconLayoutSidebar />
+            </button>
+          }
+        >
           <NavItem icon={<IconChanges />} label={t.navChanges}   active={activeView === 'changes'}  badge={totalChanges}   onClick={() => setActiveView('changes')} />
           <NavItem icon={<IconHistory />} label={t.navHistory}   active={activeView === 'history'}  count={commits.length} onClick={() => setActiveView('history')} />
           <NavItem icon={<IconGraph   />} label={t.navGraph}     active={activeView === 'graph'}                           onClick={() => setActiveView('graph')} />

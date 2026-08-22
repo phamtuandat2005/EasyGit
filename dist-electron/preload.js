@@ -6,20 +6,34 @@ electron.contextBridge.exposeInMainWorld("electron", {
   openDirectory: () => electron.ipcRenderer.invoke("dialog:openDirectory"),
   // Git IPC
   git: {
-    status: (repoPath) => electron.ipcRenderer.invoke("git:status", repoPath),
-    log: (repoPath, maxCount) => electron.ipcRenderer.invoke("git:log", repoPath, maxCount),
-    diff: (repoPath, file) => electron.ipcRenderer.invoke("git:diff", repoPath, file)
+    openRepo: (path) => electron.ipcRenderer.invoke("git:openRepo", path),
+    log: (path, maxCount) => electron.ipcRenderer.invoke("git:log", path, maxCount),
+    status: (path) => electron.ipcRenderer.invoke("git:status", path),
+    branches: (path) => electron.ipcRenderer.invoke("git:branches", path),
+    stashes: (path) => electron.ipcRenderer.invoke("git:stashes", path),
+    remotes: (path) => electron.ipcRenderer.invoke("git:remotes", path),
+    tags: (path) => electron.ipcRenderer.invoke("git:tags", path),
+    diff: (path, file, staged) => electron.ipcRenderer.invoke("git:diff", path, file, staged),
+    currentBranch: (path) => electron.ipcRenderer.invoke("git:currentBranch", path),
+    syncStatus: (path) => electron.ipcRenderer.invoke("git:syncStatus", path),
+    stage: (path, file) => electron.ipcRenderer.invoke("git:stage", path, file),
+    unstage: (path, file) => electron.ipcRenderer.invoke("git:unstage", path, file),
+    stageAll: (path) => electron.ipcRenderer.invoke("git:stageAll", path),
+    unstageAll: (path) => electron.ipcRenderer.invoke("git:unstageAll", path),
+    commit: (path, message) => electron.ipcRenderer.invoke("git:commit", path, message),
+    push: (path) => electron.ipcRenderer.invoke("git:push", path),
+    pull: (path) => electron.ipcRenderer.invoke("git:pull", path),
+    fetch: (path) => electron.ipcRenderer.invoke("git:fetch", path)
   },
-  // Menu action listener (main → renderer)
-  onMenuAction: (callback) => {
-    const handler = (_, action) => callback(action);
-    electron.ipcRenderer.on("menu-action", handler);
-    return () => electron.ipcRenderer.removeListener("menu-action", handler);
+  // Menu → Renderer listeners
+  onMenuAction: (cb) => {
+    const h = (_, a) => cb(a);
+    electron.ipcRenderer.on("menu-action", h);
+    return () => electron.ipcRenderer.removeListener("menu-action", h);
   },
-  // Open repository from menu
-  onOpenRepository: (callback) => {
-    const handler = (_, path) => callback(path);
-    electron.ipcRenderer.on("open-repository", handler);
-    return () => electron.ipcRenderer.removeListener("open-repository", handler);
+  onOpenRepository: (cb) => {
+    const h = (_, p) => cb(p);
+    electron.ipcRenderer.on("open-repository", h);
+    return () => electron.ipcRenderer.removeListener("open-repository", h);
   }
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRepositoryStore, useSettingsStore } from '../../store';
+import { useRepositoryStore, useSettingsStore, useUIStore } from '../../store';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Button } from '../ui/Button';
 import styles from './CommitComposer.module.css';
@@ -7,11 +7,43 @@ import styles from './CommitComposer.module.css';
 export function CommitComposer() {
   const [message, setMessage] = useState('');
   const [description, setDescription] = useState('');
-  const { stagedChanges } = useRepositoryStore();
+  const [isCommitting, setIsCommitting] = useState(false);
+  const { stagedChanges, commitChanges, push } = useRepositoryStore();
   const { settings } = useSettingsStore();
+  const { addToast } = useUIStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
 
-  const isReady = stagedChanges.length > 0 && message.trim().length > 0;
+  const isReady = stagedChanges.length > 0 && message.trim().length > 0 && !isCommitting;
+
+  const handleCommit = async (andPush = false) => {
+    if (!isReady) return;
+    setIsCommitting(true);
+    
+    const fullMessage = description.trim() ? `${message}\n\n${description}` : message;
+    
+    try {
+      const ok = await commitChanges(fullMessage);
+      if (ok) {
+        setMessage('');
+        setDescription('');
+        addToast({ type: 'success', title: 'Commit successful' });
+        
+        if (andPush) {
+          addToast({ type: 'info', title: 'Pushing changes...' });
+          const pushOk = await push();
+          if (pushOk) {
+            addToast({ type: 'success', title: 'Push successful' });
+          } else {
+            addToast({ type: 'error', title: 'Push failed' });
+          }
+        }
+      } else {
+        addToast({ type: 'error', title: 'Commit failed' });
+      }
+    } finally {
+      setIsCommitting(false);
+    }
+  };
 
   return (
     <div className={styles.composer}>
@@ -28,6 +60,7 @@ export function CommitComposer() {
           className={styles.messageInput}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          disabled={isCommitting}
         />
         <textarea 
           placeholder={t.commitDescPlaceholder} 
@@ -35,6 +68,7 @@ export function CommitComposer() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
+          disabled={isCommitting}
         />
       </div>
       
@@ -42,12 +76,14 @@ export function CommitComposer() {
         <Button 
           variant="primary" 
           disabled={!isReady}
+          onClick={() => handleCommit(false)}
         >
           {t.btnCommit}
         </Button>
         <Button 
           variant="secondary" 
           disabled={!isReady}
+          onClick={() => handleCommit(true)}
         >
           {t.btnCommitPush}
         </Button>
