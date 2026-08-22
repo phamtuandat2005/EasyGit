@@ -56,6 +56,12 @@
   background-color: var(--bg-panel);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: width var(--transition-normal);
+}
+
+.contextPanelHidden {
+  display: none;
 }
 
 .statusbar {

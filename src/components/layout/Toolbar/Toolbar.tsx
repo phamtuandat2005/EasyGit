@@ -1,5 +1,6 @@
 import React from 'react';
-import { useRepositoryStore } from '../../../store';
+import { useRepositoryStore, useSettingsStore } from '../../../store';
+import { TRANSLATIONS } from '../../../i18n/translations';
 import { BranchSelector } from './BranchSelector';
 import { SyncStatus } from './SyncStatus';
 import { Button } from '../../ui/Button';
@@ -7,6 +8,8 @@ import styles from './Toolbar.module.css';
 
 export function Toolbar() {
   const { path } = useRepositoryStore();
+  const { settings } = useSettingsStore();
+  const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
 
   if (!path) return <div className={styles.toolbar}></div>;
 
@@ -14,11 +17,11 @@ export function Toolbar() {
     <div className={styles.toolbar}>
       <div className={styles.left}>
         <div className={styles.actions}>
-          <Button variant="ghost" size="sm" icon="📥">Pull</Button>
-          <Button variant="ghost" size="sm" icon="📤">Push</Button>
-          <Button variant="ghost" size="sm" icon="🔄">Fetch</Button>
+          <Button variant="ghost" size="sm" icon="📥">{t.btnPull}</Button>
+          <Button variant="ghost" size="sm" icon="📤">{t.btnPush}</Button>
+          <Button variant="ghost" size="sm" icon="🔄">{t.btnFetch}</Button>
           <div className={styles.divider} />
-          <Button variant="ghost" size="sm" icon="📦">Stash</Button>
+          <Button variant="ghost" size="sm" icon="📦">{t.btnStash}</Button>
         </div>
       </div>
       
@@ -29,7 +32,7 @@ export function Toolbar() {
       <div className={styles.right}>
         <SyncStatus />
         <div className={styles.divider} />
-        <Button variant="primary" size="sm">New Branch</Button>
+        <Button variant="primary" size="sm">{t.btnNewBranch}</Button>
       </div>
     </div>
   );

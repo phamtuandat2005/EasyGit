@@ -1,5 +1,6 @@
 import React from 'react';
-import { useRepositoryStore } from '../../../store';
+import { useRepositoryStore, useSettingsStore } from '../../../store';
+import { TRANSLATIONS } from '../../../i18n/translations';
 import { DiffViewer } from '../../git/DiffViewer';
 import type { GitFileDiff } from '../../../types/git';
 import styles from './ContextPanel.module.css';
@@ -32,6 +33,8 @@ const getMockDiff = (filePath: string): GitFileDiff => ({
 
 export function ContextPanel() {
   const { selectedFile, selectFile } = useRepositoryStore();
+  const { settings } = useSettingsStore();
+  const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
 
   if (!selectedFile) {
     return null;
@@ -42,11 +45,11 @@ export function ContextPanel() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <h3>File Details</h3>
+        <h3>{t.fileDetails}</h3>
         <button 
           className={styles.closeBtn} 
           onClick={() => selectFile(null)}
-          title="Close panel"
+          title={t.btnClosePanel}
         >
           ×
         </button>

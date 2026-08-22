@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRepositoryStore } from '../../../store';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -10,6 +11,9 @@ interface AppShellProps {
 }
 
 export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }: AppShellProps) {
+  const selectedFile = useRepositoryStore(s => s.selectedFile);
+  const isPanelOpen = !!selectedFile && !!contextPanel;
+
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
@@ -23,11 +27,9 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
           <div className={styles.content}>
             {children}
           </div>
-          {contextPanel && (
-            <div className={styles.contextPanel}>
-              {contextPanel}
-            </div>
-          )}
+          <div className={isPanelOpen ? styles.contextPanel : styles.contextPanelHidden}>
+            {contextPanel}
+          </div>
         </div>
         <div className={styles.statusbar}>
           {statusbar}
