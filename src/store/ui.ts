@@ -135,7 +135,7 @@ export const useUIStore = create<UIStore>((set) => ({
       status: 'running',
       startedAt: new Date().toISOString(),
     };
-    set((s) => ({ gitTerminalOpen: true, gitOperations: [entry, ...s.gitOperations].slice(0, 20) }));
+    set((s) => ({ gitTerminalOpen: true, gitOperations: [...s.gitOperations, entry].slice(-20) }));
     return id;
   },
   appendGitOperationOutput: (id, line) => set((s) => ({
