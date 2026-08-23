@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRepositoryStore } from '../store';
+import logoUrl from '../assets/easygit-logo.svg';
 import styles from './WelcomeView.module.css';
 
 const RecentKey = 'easygit:recent-repos';
@@ -89,9 +90,7 @@ export function WelcomeView() {
       <div className={styles.card}>
         {/* Logo & Title */}
         <div className={styles.logoRow}>
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="white" className={styles.logo}>
-            <path d="M12 2C10 2 8.5 10 7 19c0 0 1.5.5 2.5-1 1-1.5 1.5-6 2.5-6 1 0 1.5 4.5 2.5 6 1 1.5 2.5 1 2.5 1C15.5 10 14 2 12 2z" />
-          </svg>
+          <img src={logoUrl} alt="EasyGit logo" className={styles.logoImage} />
           <h1 className={styles.title}>EasyGit IDE</h1>
         </div>
 

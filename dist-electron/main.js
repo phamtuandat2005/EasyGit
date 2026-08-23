@@ -179,7 +179,8 @@ function buildMenu() {
         { label: "EasyGit Documentation", click: () => electron.shell.openExternal("https://github.com/") },
         { label: "Report an Issue", click: () => electron.shell.openExternal("https://github.com/") },
         { type: "separator" },
-        { label: "About EasyGit", click: () => win == null ? void 0 : win.webContents.send("menu-action", "about") }
+        { label: "About EasyGit", click: () => win == null ? void 0 : win.webContents.send("menu-action", "about") },
+        { label: "Reset Appearance", click: () => win == null ? void 0 : win.webContents.send("menu-action", "reset-appearance") }
       ]
     }
   ];

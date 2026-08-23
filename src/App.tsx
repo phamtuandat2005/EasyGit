@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { useUIStore, useCommandStore, useSettingsStore, useRepositoryStore, applyAppearanceToDOM } from './store';
+import { useUIStore, useCommandStore, useSettingsStore, useRepositoryStore, applyAppearanceToDOM, DEFAULT_SETTINGS } from './store';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AppShell } from './components/layout/AppShell/AppShell';
 import { Sidebar } from './components/layout/Sidebar/Sidebar';
@@ -72,6 +72,13 @@ export function App() {
         case 'view:graph':      setActiveView('graph'); break;
         case 'view:branches':   setActiveView('branches'); break;
         case 'settings':        openModal({ type: 'settings' }); break;
+        case 'reset-appearance':
+          useSettingsStore.getState().applySettings({
+            ...useSettingsStore.getState().settings,
+            appearance: DEFAULT_SETTINGS.appearance,
+          });
+          applyAppearanceToDOM(DEFAULT_SETTINGS.appearance);
+          break;
         case 'command-palette': openModal({ type: 'command-palette' }); break;
         case 'about':           openModal({ type: 'settings' }); break;
         case 'clone':

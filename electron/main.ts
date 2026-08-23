@@ -162,6 +162,7 @@ function buildMenu() {
         { label: 'Report an Issue',       click: () => shell.openExternal('https://github.com/') },
         { type: 'separator' },
         { label: 'About EasyGit',         click: () => win?.webContents.send('menu-action', 'about') },
+        { label: 'Reset Appearance',      click: () => win?.webContents.send('menu-action', 'reset-appearance') },
       ],
     },
   ];

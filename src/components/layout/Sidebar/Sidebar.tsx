@@ -3,14 +3,12 @@ import { createPortal } from 'react-dom';
 import { useUIStore, useRepositoryStore, useSettingsStore } from '../../../store';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { useUiTranslation } from '../../../i18n/ui-translations';
+import logoUrl from '../../../assets/easygit-logo.svg';
 import styles from './Sidebar.module.css';
 
 // ─── SVG Icons (VS Code style) ───────────────────────────────────────────────
 const IconChanges = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M1 3h14v1H1V3zm0 5h14v1H1V8zm0 5h14v1H1v-1z"/>
-    <circle cx="13" cy="3.5" r="2.5" fill="var(--icon-modified)"/>
-  </svg>
+  <img src={logoUrl} alt="EasyGit" className={styles.sidebarLogo} />
 );
 const IconHistory = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

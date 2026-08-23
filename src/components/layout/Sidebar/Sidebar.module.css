@@ -126,6 +126,13 @@
   color: inherit;
 }
 
+.sidebarLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display: block;
+}
+
 .navItem.active .navIcon {
   opacity: 1;
   color: var(--accent);

@@ -13,8 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "package": "npm run build:web && npm run build:electron && electron-builder",
-    "package:desktop": "npm run build:web && npm run build:electron && electron-builder"
+    "package": "npm run clean:release && npm run build:web && npm run build:electron && npx electron-builder",
+    "package:desktop": "npm run clean:release && npm run build:web && npm run build:electron && npx electron-builder",
+    "clean:release": "node scripts/clean-release.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -22,6 +23,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.45.3",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -31,8 +33,7 @@
     "vite": "^5.4.0",
     "vite-plugin-electron": "^0.28.7",
     "vite-plugin-electron-renderer": "^0.14.5",
-    "vitest": "^2.0.4",
-    "@playwright/test": "^1.45.3"
+    "vitest": "^2.0.4"
   },
   "build": {
     "appId": "com.easygit.app",
@@ -52,9 +53,7 @@
     "win": {
       "target": [
         "nsis"
-      ],
-      "signExecutable": false,
-      "signAndEditExecutable": false
+      ]
     },
     "mac": {
       "target": [
@@ -66,5 +65,9 @@
         "AppImage"
       ]
     }
+  },
+  "allowScripts": {
+    "electron@31.7.7": true,
+    "esbuild@0.21.5": true
   }
 }

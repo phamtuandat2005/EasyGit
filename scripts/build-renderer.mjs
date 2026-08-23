@@ -1,7 +1,6 @@
-import { resolve } from 'path';
-import { cpSync, mkdirSync, existsSync } from 'fs';
+import { resolve, join } from 'path';
+import { cpSync, existsSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
-import { dirname, join } from 'path';
 
 const sourceBinary = resolve(process.cwd(), 'node_modules/@esbuild/win32-x64/esbuild.exe');
 const tempDir = join(tmpdir(), 'easygit-esbuild');
@@ -18,6 +17,7 @@ const { default: react } = await import('@vitejs/plugin-react');
 
 await build({
   configFile: false,
+  base: './',
   plugins: [react()],
   resolve: {
     preserveSymlinks: true,
