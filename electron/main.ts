@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import { join } from 'path';
+import { rm } from 'fs/promises';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { GitResult } from '../src/types/git';
@@ -345,6 +346,47 @@ app.whenReady().then(() => {
       await git(repoPath, ['reset', 'HEAD']);
       return { success: true };
     } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('fs:deletePath', async (_, paths: string[]) => {
+    try {
+      const uniquePaths = Array.from(new Set((paths ?? []).filter(Boolean)));
+      await Promise.all(uniquePaths.map((p) => rm(p, { recursive: true, force: true })));
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('git:remove', async (_, repoPath: string, files: string[], options?: { cached?: boolean }) => {
+    try {
+      const uniqueFiles = Array.from(new Set((files ?? []).filter(Boolean)));
+      if (uniqueFiles.length === 0) return { success: false, error: 'No files provided' };
+      if (options?.cached) {
+        await git(repoPath, ['rm', '--cached', '--', ...uniqueFiles]);
+        return { success: true };
+      }
+      await git(repoPath, ['rm', '-f', '--', ...uniqueFiles]);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('git:restore', async (_, repoPath: string, files: string[]) => {
+    try {
+      const uniqueFiles = Array.from(new Set((files ?? []).filter(Boolean)));
+      if (uniqueFiles.length === 0) return { success: false, error: 'No files provided' };
+      await git(repoPath, ['restore', '--staged', '--worktree', '--', ...uniqueFiles]);
+      return { success: true };
+    } catch (e: any) {
+      try {
+        await git(repoPath, ['checkout', 'HEAD', '--', ...(files ?? [])]);
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
   });
 
   // ── git:commit ───────────────────────────────────────────────────────────────

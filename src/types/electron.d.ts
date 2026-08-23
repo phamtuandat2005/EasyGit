@@ -11,6 +11,9 @@ export interface ElectronGitAPI {
   diffStaged: (repoPath: string, file?: string) => Promise<GitResult<string>>;
   add: (repoPath: string, files: string[]) => Promise<GitResult>;
   reset: (repoPath: string, files: string[]) => Promise<GitResult>;
+  remove: (repoPath: string, files: string[], options?: { cached?: boolean }) => Promise<GitResult>;
+  restore: (repoPath: string, files: string[]) => Promise<GitResult>;
+  deletePath: (paths: string[]) => Promise<GitResult>;
   commit: (repoPath: string, message: string) => Promise<GitResult>;
   push: (repoPath: string) => Promise<GitResult>;
   pull: (repoPath: string) => Promise<GitResult>;

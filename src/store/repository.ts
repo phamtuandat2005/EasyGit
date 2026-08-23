@@ -25,6 +25,8 @@ interface RepositoryStore extends RepositoryState {
   stageAll: () => Promise<void>;
   unstageAll: () => Promise<void>;
   discardFile: (filePath: string) => Promise<boolean>;
+  deleteFiles: (filePaths: string[], options?: { keepLocal?: boolean }) => Promise<boolean>;
+  restoreFiles: (filePaths: string[]) => Promise<boolean>;
   commitChanges: (message: string) => Promise<boolean>;
   push: () => Promise<boolean>;
   pull: () => Promise<boolean>;
@@ -375,6 +377,63 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     if (result?.success) {
       useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
+      return true;
+    }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
+    return false;
+  },
+
+  deleteFiles: async (filePaths: string[], options?: { keepLocal?: boolean }) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const uniqueFiles = Array.from(new Set((filePaths ?? []).filter(Boolean)));
+    if (uniqueFiles.length === 0) return false;
+    const state = get();
+    const tracked = new Set([...state.stagedChanges, ...state.unstagedChanges].map(f => f.path));
+    const untracked = new Set(state.unstagedChanges.filter(f => f.status === 'untracked' || f.status === 'ignored').map(f => f.path));
+    const deleteOnFs: string[] = [];
+    const deleteViaGit: string[] = [];
+
+    for (const filePath of uniqueFiles) {
+      if (untracked.has(filePath) || options?.keepLocal === false && !tracked.has(filePath)) {
+        deleteOnFs.push(filePath);
+      } else {
+        deleteViaGit.push(filePath);
+      }
+    }
+
+    if (deleteViaGit.length > 0) {
+      const opType = deleteViaGit.length > 1 ? 'deleteFiles' : (options?.keepLocal ? 'removeFromGit' : 'deleteFile');
+      const opId = useUIStore.getState().beginGitOperation(opType, { files: deleteViaGit.join(' '), file: deleteViaGit[0] });
+      const result = options?.keepLocal
+        ? await electronGit.remove(path, deleteViaGit, { cached: true })
+        : await electronGit.remove(path, deleteViaGit, { cached: false });
+      if (!result?.success) {
+        useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
+        return false;
+      }
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
+    }
+
+    if (deleteOnFs.length > 0) {
+      const result = await electronGit.deletePath(deleteOnFs);
+      if (!result?.success) return false;
+    }
+
+    await get().loadRepository(path);
+    return true;
+  },
+
+  restoreFiles: async (filePaths: string[]) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const uniqueFiles = Array.from(new Set((filePaths ?? []).filter(Boolean)));
+    if (uniqueFiles.length === 0) return false;
+    const opId = useUIStore.getState().beginGitOperation('restoreFile', { files: uniqueFiles.join(' ') });
+    const result = await electronGit.restore(path, uniqueFiles);
+    if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
+      await get().loadRepository(path);
       return true;
     }
     useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });

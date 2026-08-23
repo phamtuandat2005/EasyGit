@@ -14,6 +14,22 @@ export function describeGitOperation(type: GitOperationType, args: Record<string
       return { type, command: 'git add -A', explanation: 'Working Tree → Staging Area' };
     case 'unstageAll':
       return { type, command: 'git reset HEAD', explanation: 'Staging Area → Working Tree' };
+    case 'deleteFile': {
+      const file = String(args.file ?? '');
+      return { type, command: `git rm -f -- ${file}`, explanation: 'Delete tracked file and stage removal' };
+    }
+    case 'deleteFiles': {
+      const files = String(args.files ?? '');
+      return { type, command: `git rm -f -- ${files}`.trim(), explanation: 'Delete multiple files and stage removal' };
+    }
+    case 'restoreFile': {
+      const file = String(args.file ?? '');
+      return { type, command: `git restore --staged --worktree -- ${file}`, explanation: 'Restore file from index and working tree' };
+    }
+    case 'removeFromGit': {
+      const file = String(args.file ?? '');
+      return { type, command: `git rm --cached -- ${file}`, explanation: 'Remove file from Git index only' };
+    }
     case 'commit': {
       const message = String(args.message ?? '');
       return { type, command: `git commit -m "${message.replace(/"/g, '\\"')}"`, explanation: 'Staging Area → New Commit' };
