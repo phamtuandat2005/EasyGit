@@ -18,7 +18,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
+      '@': resolve(process.cwd(), 'src'),
     },
   },
   css: {
@@ -30,4 +30,3 @@ export default defineConfig({
     port: 5173,
   },
 });
-
