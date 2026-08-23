@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('electron', {
     push:          (path: string)                              => ipcRenderer.invoke('git:push', path),
     pull:          (path: string)                              => ipcRenderer.invoke('git:pull', path),
     fetch:         (path: string)                              => ipcRenderer.invoke('git:fetch', path),
+    rebase:        (path: string, branch: string)              => ipcRenderer.invoke('git:rebase', path, branch),
     init:          (path: string)                              => ipcRenderer.invoke('git:init', path),
     clone:         (url: string, destination: string)          => ipcRenderer.invoke('git:clone', url, destination),
     stash:         (path: string)                              => ipcRenderer.invoke('git:stash', path),

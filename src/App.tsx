@@ -18,6 +18,7 @@ import StashView from './views/StashView';
 import TagsView from './views/TagsView';
 import RemotesView from './views/RemotesView';
 import { WelcomeView } from './views/WelcomeView';
+import { TRANSLATIONS } from './i18n/translations';
 import styles from './App.module.css';
 
 export function App() {
@@ -32,29 +33,35 @@ export function App() {
   
   const { path, loadRepository } = useRepositoryStore();
   const { settings } = useSettingsStore();
+  const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS.English;
 
   useEffect(() => {
     applyAppearanceToDOM(settings.appearance);
+    if (settings.appearance.theme !== 'System') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleThemeChange = () => applyAppearanceToDOM(settings.appearance);
+    media.addEventListener?.('change', handleThemeChange);
+    return () => media.removeEventListener?.('change', handleThemeChange);
   }, [settings.appearance]);
 
   useEffect(() => {
-    registerCommand({ id: 'view:changes', label: 'Show Changes', category: 'Navigation', shortcut: 'Ctrl+1', action: () => setActiveView('changes') });
-    registerCommand({ id: 'view:history', label: 'Show History', category: 'Navigation', shortcut: 'Ctrl+2', action: () => setActiveView('history') });
-    registerCommand({ id: 'view:graph', label: 'Show Graph', category: 'Navigation', shortcut: 'Ctrl+3', action: () => setActiveView('graph') });
-    registerCommand({ id: 'view:branches', label: 'Show Branches', category: 'Navigation', action: () => setActiveView('branches') });
-    registerCommand({ id: 'view:stash', label: 'Show Stash', category: 'Navigation', action: () => setActiveView('stash') });
-    registerCommand({ id: 'app:settings', label: 'Open Settings', category: 'Application', action: () => openModal({ type: 'settings' }) });
-    registerCommand({ id: 'git:fetch', label: 'Fetch', category: 'Git', action: () => useRepositoryStore.getState().fetch() });
-    registerCommand({ id: 'git:pull', label: 'Pull', category: 'Git', action: () => useRepositoryStore.getState().pull() });
-    registerCommand({ id: 'git:push', label: 'Push', category: 'Git', action: () => useRepositoryStore.getState().push() });
-    registerCommand({ id: 'git:stash', label: 'Stash All Changes', category: 'Git', action: () => useRepositoryStore.getState().stash() });
-    registerCommand({ id: 'git:stashPop', label: 'Stash Pop', category: 'Git', action: () => useRepositoryStore.getState().stashPop() });
-    registerCommand({ id: 'git:undo', label: 'Undo Last Commit', category: 'Git', action: () => useRepositoryStore.getState().undoCommit() });
-    registerCommand({ id: 'git:merge', label: 'Merge Branch...', category: 'Git', action: () => openModal({ type: 'merge' }) });
+    registerCommand({ id: 'view:changes', label: t.navChanges, category: t.navWorkspace, shortcut: 'Ctrl+1', action: () => setActiveView('changes') });
+    registerCommand({ id: 'view:history', label: t.navHistory, category: t.navWorkspace, shortcut: 'Ctrl+2', action: () => setActiveView('history') });
+    registerCommand({ id: 'view:graph', label: t.navGraph, category: t.navWorkspace, shortcut: 'Ctrl+3', action: () => setActiveView('graph') });
+    registerCommand({ id: 'view:branches', label: t.navBranches, category: t.navRepository, action: () => setActiveView('branches') });
+    registerCommand({ id: 'view:stash', label: t.navStashes, category: t.navRepository, action: () => setActiveView('stash') });
+    registerCommand({ id: 'app:settings', label: t.navSettings, category: t.navSettings, action: () => openModal({ type: 'settings' }) });
+    registerCommand({ id: 'git:fetch', label: t.btnFetch, category: t.gitTitle, action: () => useRepositoryStore.getState().fetch() });
+    registerCommand({ id: 'git:pull', label: t.btnPull, category: t.gitTitle, action: () => useRepositoryStore.getState().pull() });
+    registerCommand({ id: 'git:push', label: t.btnPush, category: t.gitTitle, action: () => useRepositoryStore.getState().push() });
+    registerCommand({ id: 'git:stash', label: t.btnStash, category: t.gitTitle, action: () => useRepositoryStore.getState().stash() });
+    registerCommand({ id: 'git:stashPop', label: `${t.btnStash} Pop`, category: t.gitTitle, action: () => useRepositoryStore.getState().stashPop() });
+    registerCommand({ id: 'git:undo', label: `${t.btnCommit} Undo`, category: t.gitTitle, action: () => useRepositoryStore.getState().undoCommit() });
+    registerCommand({ id: 'git:merge', label: `${t.btnCommit} Merge`, category: t.gitTitle, action: () => openModal({ type: 'merge' }) });
     registerCommand({ id: 'git:resetSoft', label: 'Reset Soft (HEAD~1)', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('soft', 'HEAD~1') });
     registerCommand({ id: 'git:resetMixed', label: 'Reset Mixed (HEAD~1)', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('mixed', 'HEAD~1') });
     registerCommand({ id: 'git:resetHard', label: 'Reset Hard (HEAD~1) ⚠️', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('hard', 'HEAD~1') });
-  }, []);
+  }, [openModal, registerCommand, setActiveView, settings.general.language, t]);
 
   // Listen to native menu bar actions from Electron main process
   useEffect(() => {

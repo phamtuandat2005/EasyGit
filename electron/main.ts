@@ -377,6 +377,17 @@ app.whenReady().then(() => {
     } catch (e: any) { return { success: false, error: e.message }; }
   });
 
+  // ── git:rebase ──────────────────────────────────────────────────────────────
+  ipcMain.handle('git:rebase', async (_, repoPath: string, branch: string) => {
+    try {
+      await git(repoPath, ['rebase', branch]);
+      return { success: true };
+    } catch (e: any) {
+      const isConflict = /CONFLICT|conflict|resolve/i.test(e?.message ?? '');
+      return { success: false, error: e.message, hasConflict: isConflict };
+    }
+  });
+
   // ── git:init ────────────────────────────────────────────────────────────────
   ipcMain.handle('git:init', async (_, repoPath: string) => {
     try {
