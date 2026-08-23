@@ -5,6 +5,7 @@ import { BranchSelector } from './BranchSelector';
 import { SyncStatus } from './SyncStatus';
 import { Button } from '../../ui/Button';
 import styles from './Toolbar.module.css';
+import { useUiTranslation } from '../../../i18n/ui-translations';
 
 // ─── SVG Icon for Layout Toggle ──────────────────────────────────────────────
 const IconLayoutSidebar = () => (
@@ -27,6 +28,7 @@ export function Toolbar() {
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
 
   // ── Auto-refresh on window focus ─────────────────────────────────────────────
   React.useEffect(() => {
@@ -50,9 +52,9 @@ export function Toolbar() {
       else if (action === 'stash') ok = await useRepositoryStore.getState().stash();
       
       if (ok) {
-        addToast({ type: 'success', title: `${action} successful` });
+        addToast({ type: 'success', title: `${action} ${ui('successful')}` });
       } else {
-        addToast({ type: 'error', title: `${action} failed` });
+        addToast({ type: 'error', title: `${action} ${ui('failed')}` });
       }
     } finally {
       setIsSyncing(false);
@@ -74,8 +76,8 @@ export function Toolbar() {
               <button 
                 className={styles.toggleBtn} 
                 onClick={toggleSidebar} 
-                title="Open Sidebar"
-                aria-label="Open Sidebar"
+                title={ui('expand')}
+                aria-label={ui('expand')}
               >
                 <IconLayoutSidebar />
               </button>
@@ -85,7 +87,7 @@ export function Toolbar() {
           <button
             className={`${styles.refreshBtn} ${isRefreshing ? styles.spinning : ''}`}
             onClick={handleRefresh}
-            title="Refresh status (F5)"
+            title={`${ui('status')} (F5)`}
             disabled={isRefreshing}
             aria-label="Refresh"
           >
@@ -98,8 +100,8 @@ export function Toolbar() {
           <div className={styles.divider} />
           <Button variant="ghost" size="sm" icon="📦" onClick={() => handleNetworkAction('stash')} disabled={isSyncing}>{t.btnStash}</Button>
           {!gitTerminalOpen && (
-            <Button variant="ghost" size="sm" icon=">_" onClick={openGitTerminal} title="Open Git Operation Terminal">
-              Terminal
+            <Button variant="ghost" size="sm" icon=">_" onClick={openGitTerminal} title={ui('terminal')}>
+              {ui('terminal')}
             </Button>
           )}
         </div>

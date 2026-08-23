@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useRepositoryStore, useUIStore } from '../../store';
 import { Button } from './Button';
 import styles from './MergeModal.module.css';
+import { useSettingsStore } from '../../store';
+import { TRANSLATIONS } from '../../i18n/translations';
+import { useUiTranslation } from '../../i18n/ui-translations';
 
 interface MergeModalProps {
   isOpen: boolean;
@@ -12,6 +15,9 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
   const { branches, currentBranch, mergeBranch, isMerging, conflictedFiles, abortMerge, resolveConflict } =
     useRepositoryStore();
   const { addToast } = useUIStore();
+  const { settings } = useSettingsStore();
+  const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS.English;
+  const ui = useUiTranslation();
   const [selectedBranch, setSelectedBranch] = useState('');
   const [noFF, setNoFF] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,13 +33,13 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
     setIsLoading(false);
 
     if (result.success) {
-      addToast({ type: 'success', title: 'Merge thành công', message: `Đã merge nhánh "${selectedBranch}" vào "${currentBranch}"` });
+      addToast({ type: 'success', title: `${ui('merge')} ${ui('successful')}`, message: `${selectedBranch} → ${currentBranch}` });
       onClose();
     } else if (result.hasConflict) {
-      addToast({ type: 'warning', title: 'Xung đột (Conflict)', message: 'Có xung đột cần được giải quyết thủ công.', duration: 0 });
+      addToast({ type: 'warning', title: ui('problems'), message: `${conflictedFiles.length}`, duration: 0 });
       // Don't close — show conflict panel below
     } else {
-      addToast({ type: 'error', title: 'Merge thất bại', message: result.error ?? 'Đã có lỗi xảy ra.' });
+      addToast({ type: 'error', title: `${ui('merge')} ${ui('failed')}`, message: result.error });
     }
   };
 
@@ -41,13 +47,13 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
     setIsLoading(true);
     await abortMerge();
     setIsLoading(false);
-    addToast({ type: 'info', title: 'Đã huỷ Merge' });
+    addToast({ type: 'info', title: `${ui('merge')} ${ui('cancel')}` });
     onClose();
   };
 
   const handleResolve = async (filePath: string, resolution: 'ours' | 'theirs') => {
     await resolveConflict(filePath, resolution);
-    addToast({ type: 'success', title: 'Đã giải quyết xung đột', message: filePath });
+    addToast({ type: 'success', title: `${ui('status')}: ${ui('successful')}`, message: filePath });
   };
 
   return (
@@ -58,12 +64,12 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
           <div className={styles.headerIcon}>🔀</div>
           <div>
             <h2 className={styles.title}>
-              {isMerging ? 'Xung đột cần giải quyết' : 'Merge Branch'}
+              {isMerging ? ui('problems') : ui('merge')}
             </h2>
             <p className={styles.subtitle}>
               {isMerging
-                ? `${conflictedFiles.length} file đang bị xung đột`
-                : `Đang ở nhánh: ${currentBranch}`}
+                ? `${conflictedFiles.length}`
+                : `${currentBranch}`}
             </p>
           </div>
           {!isMerging && (
@@ -77,8 +83,8 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
             <div className={styles.conflictWarning}>
               <span className={styles.conflictIcon}>⚠️</span>
               <div>
-                <strong>Merge Conflict!</strong>
-                <p>Git không thể tự động merge các file dưới đây. Hãy chọn giữ phiên bản nào hoặc chỉnh sửa tay.</p>
+                <strong>{ui('problems')}</strong>
+                <p>{ui('executeHint')}</p>
               </div>
             </div>
 
@@ -92,14 +98,14 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
                       onClick={() => handleResolve(file, 'ours')}
                       title={`Giữ code của nhánh ${currentBranch}`}
                     >
-                      ✓ Của tôi
+                        ✓ {ui('confirm')}
                     </button>
                     <button
                       className={`${styles.resolveBtn} ${styles.theirs}`}
                       onClick={() => handleResolve(file, 'theirs')}
                       title={`Lấy code từ nhánh được merge vào`}
                     >
-                      ↓ Của họ
+                        ↓ {ui('apply')}
                     </button>
                   </div>
                 </div>
@@ -107,14 +113,14 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
 
               {conflictedFiles.length === 0 && (
                 <div className={styles.conflictResolved}>
-                  ✅ Tất cả xung đột đã được giải quyết! Bạn có thể commit để hoàn tất.
+                  ✅ {ui('successful')}
                 </div>
               )}
             </div>
 
             <div className={styles.conflictFooter}>
               <Button variant="danger" onClick={handleAbort} disabled={isLoading}>
-                ✕ Huỷ Merge
+                ✕ {t.btnCancel}
               </Button>
             </div>
           </div>
@@ -122,14 +128,14 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
           /* Normal merge form */
           <div className={styles.body}>
             <div className={styles.field}>
-              <label className={styles.label}>Chọn nhánh cần merge vào <strong>{currentBranch}</strong>:</label>
+              <label className={styles.label}>{ui('merge')} <strong>{currentBranch}</strong>:</label>
               <select
                 id="merge-branch-select"
                 className={styles.select}
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
               >
-                <option value="">-- Chọn một nhánh --</option>
+                <option value="">-- {ui('checkout')} --</option>
                 {mergeableBranches.map((b) => (
                   <option key={b.name} value={b.name}>
                     {b.name}
@@ -147,7 +153,7 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
               />
               <span>
                 <strong>--no-ff</strong> &nbsp;
-                <span className={styles.hint}>Luôn tạo merge commit (không fast-forward)</span>
+                <span className={styles.hint}>{ui('merge')}</span>
               </span>
             </label>
 
@@ -159,13 +165,13 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
             )}
 
             <div className={styles.footer}>
-              <Button variant="ghost" onClick={onClose}>Huỷ</Button>
+              <Button variant="ghost" onClick={onClose}>{t.btnCancel}</Button>
               <Button
                 variant="primary"
                 disabled={!selectedBranch || isLoading}
                 onClick={handleMerge}
               >
-                {isLoading ? 'Đang merge...' : `🔀 Merge "${selectedBranch || '?'}"`}
+                {isLoading ? `${ui('loading')}` : `🔀 ${ui('merge')} "${selectedBranch || '?'}"`}
               </Button>
             </div>
           </div>

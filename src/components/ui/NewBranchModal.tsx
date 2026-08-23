@@ -3,6 +3,7 @@ import { useUIStore, useRepositoryStore, useSettingsStore } from '../../store';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Button } from './Button';
 import styles from './NewBranchModal.module.css';
+import { useUiTranslation } from '../../i18n/ui-translations';
 
 interface NewBranchModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export function NewBranchModal({ isOpen, onClose }: NewBranchModalProps) {
   const { settings } = useSettingsStore();
   const { addToast } = useUIStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
   
   const [branchName, setBranchName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -37,10 +39,10 @@ export function NewBranchModal({ isOpen, onClose }: NewBranchModalProps) {
     setIsCreating(false);
 
     if (success) {
-      addToast({ type: 'success', title: `Branch '${branchName}' created successfully` });
+      addToast({ type: 'success', title: `${ui('newBranch')} ${ui('successful')}` });
       onClose();
     } else {
-      addToast({ type: 'error', title: `Failed to create branch '${branchName}'` });
+      addToast({ type: 'error', title: `${ui('newBranch')} ${ui('failed')}`, message: branchName });
     }
   };
 
@@ -55,7 +57,7 @@ export function NewBranchModal({ isOpen, onClose }: NewBranchModalProps) {
         <form onSubmit={handleSubmit}>
           <div className={styles.content}>
             <div className={styles.inputGroup}>
-              <label>Branch Name</label>
+              <label>{t.defaultBranch}</label>
               <input 
                 ref={inputRef}
                 type="text"
@@ -68,9 +70,9 @@ export function NewBranchModal({ isOpen, onClose }: NewBranchModalProps) {
           </div>
           
           <div className={styles.footer}>
-            <Button variant="ghost" onClick={onClose} type="button">Cancel</Button>
+            <Button variant="ghost" onClick={onClose} type="button">{t.btnCancel}</Button>
             <Button variant="primary" type="submit" disabled={!branchName.trim() || isCreating}>
-              {isCreating ? 'Creating...' : 'Create Branch'}
+              {isCreating ? t.btnDetecting : t.btnNewBranch}
             </Button>
           </div>
         </form>

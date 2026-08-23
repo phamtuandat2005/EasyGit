@@ -4,11 +4,13 @@ import { TRANSLATIONS } from '../i18n/translations';
 import { ChangedFileRow } from '../components/git/ChangedFileRow';
 import { CommitComposer } from '../components/git/CommitComposer';
 import styles from './ChangesView.module.css';
+import { useUiTranslation } from '../i18n/ui-translations';
 
 export default function ChangesView() {
   const { unstagedChanges, stagedChanges, stageAll, unstageAll } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
 
   // UNSTAGED: checkbox = "Stage All" trigger. It's never checked (clicking it stages everything).
   // STAGED: checkbox = always checked (they're all staged). Unchecking triggers unstageAll.
@@ -23,7 +25,7 @@ export default function ChangesView() {
               className={styles.selectAllCheckbox}
               checked={false}
               onChange={() => { if (unstagedChanges.length > 0) stageAll(); }}
-              title="Stage all files"
+              title={`${ui('stage')} all`}
               disabled={unstagedChanges.length === 0}
             />
             <span className={styles.sectionTitle}>{t.unstagedChanges}</span>
@@ -47,7 +49,7 @@ export default function ChangesView() {
               className={styles.selectAllCheckbox}
               checked={stagedChanges.length > 0}
               onChange={() => { if (stagedChanges.length > 0) unstageAll(); }}
-              title="Unstage all files"
+              title={`${ui('unstage')} all`}
               disabled={stagedChanges.length === 0}
             />
             <span className={styles.sectionTitle}>{t.stagedChanges}</span>

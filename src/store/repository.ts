@@ -400,15 +400,51 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   push: async () => {
     const { path } = get();
     if (!path || !electronGit) return false;
-    const opId = useUIStore.getState().beginGitOperation('push', { remote: 'origin', branch: get().currentBranch || 'main' });
-    const result = await electronGit.push(path);
-    if (result?.success) {
-      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
+    const branch = get().currentBranch || 'main';
+    const opId = useUIStore.getState().beginGitOperation('push', { remote: 'origin', branch });
+
+    const finishFailure = (result: any) => {
+      useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
+      return false;
+    };
+
+    const initialPush = await electronGit.push(path);
+    if (initialPush?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(initialPush) });
       await get().refreshStatus();
       return true;
     }
-    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
-    return false;
+
+    const stderr = gitErrText(initialPush);
+    const isNonFastForward = /non-fast-forward|fetch first|rejected/i.test(`${stderr} ${initialPush?.error ?? ''}`);
+    if (!isNonFastForward) {
+      return finishFailure(initialPush);
+    }
+
+    useUIStore.getState().appendGitOperationOutput(opId, 'Push was rejected. Fetching remote changes and rebasing before retrying...');
+
+    const fetchResult = await electronGit.fetch(path);
+    if (!fetchResult?.success) {
+      useUIStore.getState().appendGitOperationOutput(opId, 'Fetch failed.');
+      return finishFailure(fetchResult);
+    }
+
+    const remoteBranch = `origin/${branch}`;
+    const rebaseResult = await electronGit.rebase(path, remoteBranch);
+    if (!rebaseResult?.success) {
+      useUIStore.getState().appendGitOperationOutput(opId, `Rebase onto ${remoteBranch} failed.`);
+      return finishFailure(rebaseResult);
+    }
+
+    const retryPush = await electronGit.push(path);
+    if (retryPush?.success) {
+      useUIStore.getState().appendGitOperationOutput(opId, 'Push retried successfully after rebase.');
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(retryPush) });
+      await get().refreshStatus();
+      return true;
+    }
+
+    return finishFailure(retryPush);
   },
 
   pull: async () => {

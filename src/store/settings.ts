@@ -221,6 +221,9 @@ export function applyAppearanceToDOM(appearance: EasyGitSettings['appearance']) 
     root.style.setProperty('--border-default',    '#30363d');
     root.style.setProperty('--border-muted',      '#21262d');
     root.style.setProperty('--border-emphasis',   '#484f58');
+    root.style.setProperty('--terminal-bg',       '#0b1220');
+    root.style.setProperty('--terminal-code-bg',  '#111827');
+    root.style.setProperty('--terminal-muted',    '#94a3b8');
   } else {
     root.style.setProperty('--bg-app',            '#ffffff');
     root.style.setProperty('--bg-panel',          '#f6f8fa');
@@ -233,5 +236,8 @@ export function applyAppearanceToDOM(appearance: EasyGitSettings['appearance']) 
     root.style.setProperty('--border-default',    '#d0d7de');
     root.style.setProperty('--border-muted',      '#d8dee4');
     root.style.setProperty('--border-emphasis',   '#bbc1c8');
+    root.style.setProperty('--terminal-bg',       '#f6f8fa');
+    root.style.setProperty('--terminal-code-bg',  '#eaeef2');
+    root.style.setProperty('--terminal-muted',    '#636c76');
   }
 }

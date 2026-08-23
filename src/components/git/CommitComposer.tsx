@@ -3,6 +3,7 @@ import { useRepositoryStore, useSettingsStore, useUIStore } from '../../store';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Button } from '../ui/Button';
 import styles from './CommitComposer.module.css';
+import { useUiTranslation } from '../../i18n/ui-translations';
 
 export function CommitComposer() {
   const [message, setMessage] = useState('');
@@ -12,6 +13,7 @@ export function CommitComposer() {
   const { settings } = useSettingsStore();
   const { addToast } = useUIStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
 
   const isReady = stagedChanges.length > 0 && message.trim().length > 0 && !isCommitting;
 
@@ -26,19 +28,19 @@ export function CommitComposer() {
       if (ok) {
         setMessage('');
         setDescription('');
-        addToast({ type: 'success', title: 'Commit successful' });
+        addToast({ type: 'success', title: ui('commitSuccess') });
         
         if (andPush) {
-          addToast({ type: 'info', title: 'Pushing changes...' });
+          addToast({ type: 'info', title: `${t.btnPush}...` });
           const pushOk = await push();
           if (pushOk) {
-            addToast({ type: 'success', title: 'Push successful' });
+            addToast({ type: 'success', title: ui('pushSuccess') });
           } else {
-            addToast({ type: 'error', title: 'Push failed' });
+            addToast({ type: 'error', title: ui('pushFailed') });
           }
         }
       } else {
-        addToast({ type: 'error', title: 'Commit failed' });
+        addToast({ type: 'error', title: ui('commitFailed') });
       }
     } finally {
       setIsCommitting(false);
@@ -78,18 +80,18 @@ export function CommitComposer() {
             variant="ghost" 
             size="sm"
             onClick={async () => {
-              if (window.confirm('Are you sure you want to undo the last commit? Your changes will be kept in the working directory.')) {
+              if (window.confirm(ui('undoConfirm'))) {
                 setIsCommitting(true);
                 const ok = await useRepositoryStore.getState().undoCommit();
-                if (ok) addToast({ type: 'success', title: 'Undo successful' });
-                else addToast({ type: 'error', title: 'Undo failed' });
+                if (ok) addToast({ type: 'success', title: ui('undoSuccess') });
+                else addToast({ type: 'error', title: ui('undoFailed') });
                 setIsCommitting(false);
               }
             }}
             disabled={isCommitting || useRepositoryStore.getState().commits.length === 0}
-            title="Undo Last Commit (Keep changes)"
+            title={ui('undo')}
           >
-            ↩️ Undo
+            ↩️ {ui('undo')}
           </Button>
         </div>
         <Button 
