@@ -9,6 +9,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
     openRepo: (path) => electron.ipcRenderer.invoke("git:openRepo", path),
     log: (path, maxCount) => electron.ipcRenderer.invoke("git:log", path, maxCount),
     status: (path) => electron.ipcRenderer.invoke("git:status", path),
+    listFiles: (path) => electron.ipcRenderer.invoke("git:listFiles", path),
     branches: (path) => electron.ipcRenderer.invoke("git:branches", path),
     stashes: (path) => electron.ipcRenderer.invoke("git:stashes", path),
     remotes: (path) => electron.ipcRenderer.invoke("git:remotes", path),
