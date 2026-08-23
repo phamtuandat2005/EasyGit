@@ -23,6 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 const electron = require("electron");
 const path = require("path");
+const fs = require("fs");
 const promises = require("fs/promises");
 const child_process = require("child_process");
 const util = require("util");
@@ -187,12 +188,14 @@ function buildMenu() {
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(template));
 }
 function createWindow() {
+  const iconPath = electron.app.isPackaged ? path.join(process.resourcesPath, "asssets", "easygitlogo.png") : path.join(process.cwd(), "asssets", "easygitlogo.png");
   win = new electron.BrowserWindow({
     title: "EasyGit — Professional Git Client",
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    icon: fs.existsSync(iconPath) ? iconPath : void 0,
     webPreferences: {
       preload: path.join(__dirname, "preload.js")
     }
@@ -523,8 +526,8 @@ electron.app.whenReady().then(() => {
   });
   electron.ipcMain.handle("git:mergeStatus", async (_, repoPath) => {
     try {
-      const { existsSync } = await import("fs");
-      const isMerging = existsSync(`${repoPath}/.git/MERGE_HEAD`);
+      const { existsSync: existsSync2 } = await import("fs");
+      const isMerging = existsSync2(`${repoPath}/.git/MERGE_HEAD`);
       const statusOutput = await git(repoPath, ["status", "--porcelain=v1"]);
       const conflictedFiles = statusOutput.split("\n").filter((l) => l.match(/^(UU|AA|DD|AU|UA|DU|UD)/)).map((l) => l.slice(3).trim());
       return { success: true, isMerging, conflictedFiles };

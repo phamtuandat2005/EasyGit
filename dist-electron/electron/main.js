@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path_1 = require("path");
+const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const child_process_1 = require("child_process");
 const util_1 = require("util");
@@ -166,12 +167,16 @@ function buildMenu() {
 }
 // ── Window ────────────────────────────────────────────────────────────────────
 function createWindow() {
+    const iconPath = electron_1.app.isPackaged
+        ? (0, path_1.join)(process.resourcesPath, 'asssets', 'easygitlogo.png')
+        : (0, path_1.join)(process.cwd(), 'asssets', 'easygitlogo.png');
     win = new electron_1.BrowserWindow({
         title: 'EasyGit — Professional Git Client',
         width: 1280,
         height: 800,
         minWidth: 900,
         minHeight: 600,
+        icon: (0, fs_1.existsSync)(iconPath) ? iconPath : undefined,
         webPreferences: {
             preload: (0, path_1.join)(__dirname, 'preload.js'),
         },

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useUIStore, useRepositoryStore, useSettingsStore } from '../../../store';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { useUiTranslation } from '../../../i18n/ui-translations';
-import logoUrl from '../../../assets/easygit-logo.svg';
+import logoUrl from '../../../../asssets/easygitlogo.png';
 import styles from './Sidebar.module.css';
 
 // ─── SVG Icons (VS Code style) ───────────────────────────────────────────────

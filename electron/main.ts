@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { rm, readdir } from 'fs/promises';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
@@ -171,12 +172,17 @@ function buildMenu() {
 
 // ── Window ────────────────────────────────────────────────────────────────────
 function createWindow() {
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'asssets', 'easygitlogo.png')
+    : join(process.cwd(), 'asssets', 'easygitlogo.png');
+
   win = new BrowserWindow({
     title: 'EasyGit — Professional Git Client',
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    icon: existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
     },

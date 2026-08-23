@@ -44,6 +44,7 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "asssets/**/*",
       "package.json"
     ],
     "extraMetadata": {
@@ -54,6 +55,11 @@
       "target": [
         "nsis"
       ]
+    },
+    "nsis": {
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EasyGit"
     },
     "mac": {
       "target": [

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRepositoryStore } from '../store';
-import logoUrl from '../assets/easygit-logo.svg';
+import logoUrl from '../../asssets/easygitlogo.png';
 import styles from './WelcomeView.module.css';
 
 const RecentKey = 'easygit:recent-repos';
