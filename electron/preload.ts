@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electron', {
     log: (path: string, maxCount?: number) => ipcRenderer.invoke('git:log', path, maxCount),
     status: (path: string) => ipcRenderer.invoke('git:status', path),
     listFiles: (path: string) => ipcRenderer.invoke('git:listFiles', path),
+    isTracked: (path: string, filePath: string) => ipcRenderer.invoke('git:isTracked', path, filePath),
     branches: (path: string) => ipcRenderer.invoke('git:branches', path),
     stashes: (path: string) => ipcRenderer.invoke('git:stashes', path),
     remotes: (path: string) => ipcRenderer.invoke('git:remotes', path),

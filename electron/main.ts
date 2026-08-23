@@ -254,6 +254,14 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('git:isTracked', async (_, repoPath: string, filePath: string) => {
+    try {
+      return { success: true, tracked: await isTracked(repoPath, filePath) };
+    } catch (e: any) {
+      return { success: false, error: e.message, tracked: false };
+    }
+  });
+
   // ── git:branches ────────────────────────────────────────────────────────────
   ipcMain.handle('git:branches', async (_, repoPath: string) => {
     try {

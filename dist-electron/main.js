@@ -258,6 +258,13 @@ electron.app.whenReady().then(() => {
       return fail(["list-workspace-files"], e);
     }
   });
+  electron.ipcMain.handle("git:isTracked", async (_, repoPath, filePath) => {
+    try {
+      return { success: true, tracked: await isTracked(repoPath, filePath) };
+    } catch (e) {
+      return { success: false, error: e.message, tracked: false };
+    }
+  });
   electron.ipcMain.handle("git:branches", async (_, repoPath) => {
     try {
       const output = await git(repoPath, [

@@ -395,18 +395,20 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     if (!path || !electronGit) return false;
     const uniqueFiles = Array.from(new Set((filePaths ?? []).filter(Boolean)));
     if (uniqueFiles.length === 0) return false;
-    const state = get();
-    const tracked = new Set([...state.stagedChanges, ...state.unstagedChanges].map(f => f.path));
-    const untracked = new Set(state.unstagedChanges.filter(f => f.status === 'untracked' || f.status === 'ignored').map(f => f.path));
     const deleteOnFs: string[] = [];
     const deleteViaGit: string[] = [];
 
     for (const filePath of uniqueFiles) {
-      if (untracked.has(filePath) || options?.keepLocal === false && !tracked.has(filePath)) {
-        deleteOnFs.push(filePath);
-      } else {
-        deleteViaGit.push(filePath);
+      const trackedRes = await electronGit.isTracked(path, filePath);
+      const isTracked = Boolean(trackedRes?.tracked);
+
+      if (options?.keepLocal) {
+        if (isTracked) deleteViaGit.push(filePath);
+        continue;
       }
+
+      if (isTracked) deleteViaGit.push(filePath);
+      else deleteOnFs.push(filePath);
     }
 
     if (deleteViaGit.length > 0) {
