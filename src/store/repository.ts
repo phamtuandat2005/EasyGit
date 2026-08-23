@@ -400,7 +400,6 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   push: async () => {
     const { path } = get();
     if (!path || !electronGit) return false;
-<<<<<<< HEAD
     const branch = get().currentBranch || 'main';
     const opId = useUIStore.getState().beginGitOperation('push', { remote: 'origin', branch });
 
@@ -446,17 +445,6 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     }
 
     return finishFailure(retryPush);
-=======
-    const opId = useUIStore.getState().beginGitOperation('push', { remote: 'origin', branch: get().currentBranch || 'main' });
-    const result = await electronGit.push(path);
-    if (result?.success) {
-      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
-      await get().refreshStatus();
-      return true;
-    }
-    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
-    return false;
->>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
   },
 
   pull: async () => {

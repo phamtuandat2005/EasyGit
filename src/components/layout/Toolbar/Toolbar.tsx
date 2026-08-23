@@ -100,13 +100,8 @@ export function Toolbar() {
           <div className={styles.divider} />
           <Button variant="ghost" size="sm" icon="📦" onClick={() => handleNetworkAction('stash')} disabled={isSyncing}>{t.btnStash}</Button>
           {!gitTerminalOpen && (
-<<<<<<< HEAD
             <Button variant="ghost" size="sm" icon=">_" onClick={openGitTerminal} title={ui('terminal')}>
               {ui('terminal')}
-=======
-            <Button variant="ghost" size="sm" icon=">_" onClick={openGitTerminal} title="Open Git Operation Terminal">
-              Terminal
->>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
             </Button>
           )}
         </div>

@@ -4,10 +4,7 @@ import { formatDate, shortHash, stringToColor } from '../utils/format';
 import type { GraphData } from '../types/git';
 import { buildGraphData } from '../services/graph';
 import styles from './GraphView.module.css';
-<<<<<<< HEAD
 import { useUiTranslation } from '../i18n/ui-translations';
-=======
->>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
 
 export default function GraphView() {
   const { commits, selectedCommitHash, selectCommit } = useRepositoryStore();
