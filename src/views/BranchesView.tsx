@@ -3,6 +3,7 @@ import { useRepositoryStore, useSettingsStore, useUIStore } from '../store';
 import { TRANSLATIONS } from '../i18n/translations';
 import { Button } from '../components/ui/Button';
 import styles from './BranchesView.module.css';
+import { useUiTranslation } from '../i18n/ui-translations';
 
 export default function BranchesView() {
   const { branches, remoteBranches, currentBranch, checkout, deleteBranch, renameBranch } = useRepositoryStore();
@@ -10,6 +11,7 @@ export default function BranchesView() {
   const { addToast } = useUIStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [renamingBranch, setRenamingBranch] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function BranchesView() {
     setIsCheckingOut(true);
     const ok = await checkout(branchName);
     setIsCheckingOut(false);
-    if (!ok) addToast({ type: 'error', title: 'Checkout thất bại', message: `Không thể chuyển sang nhánh "${branchName}"` });
+    if (!ok) addToast({ type: 'error', title: ui('checkoutFailed'), message: branchName });
   };
 
   const handleStartRename = (branchName: string) => {
@@ -35,15 +37,15 @@ export default function BranchesView() {
     }
     const ok = await renameBranch(renamingBranch, renameValue.trim());
     setRenamingBranch(null);
-    if (ok) addToast({ type: 'success', title: 'Đổi tên thành công', message: `"${renamingBranch}" → "${renameValue.trim()}"` });
-    else addToast({ type: 'error', title: 'Đổi tên thất bại' });
+    if (ok) addToast({ type: 'success', title: ui('renameSuccess'), message: `"${renamingBranch}" → "${renameValue.trim()}"` });
+    else addToast({ type: 'error', title: ui('renameFailed') });
   };
 
   const handleDelete = async (branchName: string, force = false) => {
     const ok = await deleteBranch(branchName, force);
     setConfirmDelete(null);
-    if (ok) addToast({ type: 'success', title: 'Đã xoá nhánh', message: `Nhánh "${branchName}" đã bị xoá.` });
-    else addToast({ type: 'error', title: 'Xoá thất bại', message: 'Nhánh chưa được merge. Thử Force Delete?' });
+    if (ok) addToast({ type: 'success', title: ui('deleteSuccess'), message: branchName });
+    else addToast({ type: 'error', title: ui('deleteFailed'), message: ui('force') });
   };
 
   return (
@@ -52,7 +54,7 @@ export default function BranchesView() {
         <h2>{t.navBranches || 'Branches'}</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" icon="🔀" onClick={() => openModal({ type: 'merge' })}>
-            Merge
+            {ui('merge')}
           </Button>
           <Button variant="primary" icon="+" onClick={() => openModal({ type: 'new-branch' })}>
             {t.btnNewBranch}
@@ -63,7 +65,7 @@ export default function BranchesView() {
       <div className={styles.content}>
         {/* Local Branches */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Local Branches</h3>
+          <h3 className={styles.sectionTitle}>{ui('localBranches')}</h3>
           <div className={styles.branchList}>
             {branches.map((branch) => (
               <div
@@ -93,7 +95,7 @@ export default function BranchesView() {
                     <div className={styles.branchName}>{branch.name}</div>
                   )}
                   {branch.tracking && (
-                    <div className={styles.branchTracking}>tracking {branch.tracking}</div>
+                    <div className={styles.branchTracking}>{ui('tracking')} {branch.tracking}</div>
                   )}
                 </div>
 
@@ -110,7 +112,7 @@ export default function BranchesView() {
                       disabled={isCheckingOut}
                       onClick={() => handleCheckout(branch.name)}
                     >
-                      Checkout
+                      {ui('checkout')}
                     </Button>
                   )}
 
@@ -124,15 +126,15 @@ export default function BranchesView() {
                     <>
                       {confirmDelete === branch.name ? (
                         <div className={styles.deleteConfirm}>
-                          <span>Xoá?</span>
+                          <span>{ui('deleteQuestion')}</span>
                           <Button variant="danger" size="sm" onClick={() => handleDelete(branch.name)}>
-                            ✓ Xoá
+                            ✓ {ui('discard')}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(branch.name, true)}>
-                            Force
+                            {ui('force')}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
-                            Huỷ
+                            {ui('cancel')}
                           </Button>
                         </div>
                       ) : (
@@ -150,7 +152,7 @@ export default function BranchesView() {
 
         {/* Remote Branches */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Remote Branches</h3>
+          <h3 className={styles.sectionTitle}>{ui('remoteBranches')}</h3>
           <div className={styles.branchList}>
             {remoteBranches.map((branch) => (
               <div key={branch.name} className={styles.branchRow}>
@@ -165,7 +167,7 @@ export default function BranchesView() {
                     disabled={isCheckingOut}
                     onClick={() => handleCheckout(branch.name)}
                   >
-                    Checkout
+                    {ui('checkout')}
                   </Button>
                 </div>
               </div>

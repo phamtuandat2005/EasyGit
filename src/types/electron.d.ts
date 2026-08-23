@@ -2,30 +2,32 @@
    Electron IPC API Type Declarations
    ============================================ */
 
+import type { GitResult } from './git';
+
 export interface ElectronGitAPI {
-  status: (repoPath: string) => Promise<string>;
-  log: (repoPath: string, maxCount?: number) => Promise<string>;
-  diff: (repoPath: string, file?: string) => Promise<string>;
-  diffStaged: (repoPath: string, file?: string) => Promise<string>;
-  add: (repoPath: string, files: string[]) => Promise<string>;
-  reset: (repoPath: string, files: string[]) => Promise<string>;
-  commit: (repoPath: string, message: string) => Promise<string>;
-  push: (repoPath: string) => Promise<string>;
-  pull: (repoPath: string) => Promise<string>;
-  fetch: (repoPath: string) => Promise<string>;
-  checkout: (repoPath: string, branch: string) => Promise<string>;
-  createBranch: (repoPath: string, name: string) => Promise<string>;
-  deleteBranch: (repoPath: string, name: string, force?: boolean) => Promise<string>;
-  merge: (repoPath: string, branch: string) => Promise<string>;
-  rebase: (repoPath: string, branch: string) => Promise<string>;
-  stashSave: (repoPath: string, message?: string) => Promise<string>;
-  stashPop: (repoPath: string, index?: number) => Promise<string>;
-  stashApply: (repoPath: string, index?: number) => Promise<string>;
-  stashDrop: (repoPath: string, index?: number) => Promise<string>;
-  stashList: (repoPath: string) => Promise<string>;
-  branchList: (repoPath: string) => Promise<string>;
-  tagList: (repoPath: string) => Promise<string>;
-  remoteList: (repoPath: string) => Promise<string>;
+  status: (repoPath: string) => Promise<GitResult<string>>;
+  log: (repoPath: string, maxCount?: number) => Promise<GitResult<string>>;
+  diff: (repoPath: string, file?: string) => Promise<GitResult<string>>;
+  diffStaged: (repoPath: string, file?: string) => Promise<GitResult<string>>;
+  add: (repoPath: string, files: string[]) => Promise<GitResult>;
+  reset: (repoPath: string, files: string[]) => Promise<GitResult>;
+  commit: (repoPath: string, message: string) => Promise<GitResult>;
+  push: (repoPath: string) => Promise<GitResult>;
+  pull: (repoPath: string) => Promise<GitResult>;
+  fetch: (repoPath: string) => Promise<GitResult>;
+  checkout: (repoPath: string, branch: string) => Promise<GitResult>;
+  createBranch: (repoPath: string, name: string) => Promise<GitResult>;
+  deleteBranch: (repoPath: string, name: string, force?: boolean) => Promise<GitResult>;
+  merge: (repoPath: string, branch: string) => Promise<GitResult<{ hasConflict?: boolean }>>;
+  rebase: (repoPath: string, branch: string) => Promise<GitResult>;
+  stashSave: (repoPath: string, message?: string) => Promise<GitResult>;
+  stashPop: (repoPath: string, index?: number) => Promise<GitResult>;
+  stashApply: (repoPath: string, index?: number) => Promise<GitResult>;
+  stashDrop: (repoPath: string, index?: number) => Promise<GitResult>;
+  stashList: (repoPath: string) => Promise<GitResult<string>>;
+  branchList: (repoPath: string) => Promise<GitResult<string>>;
+  tagList: (repoPath: string) => Promise<GitResult<string>>;
+  remoteList: (repoPath: string) => Promise<GitResult<string>>;
 }
 
 export interface ElectronAPI {

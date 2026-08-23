@@ -6,11 +6,12 @@ import type { GitFileDiff } from '../../../types/git';
 import styles from './ContextPanel.module.css';
 
 export function ContextPanel() {
-  const { selectedFile, selectFile, getFileDiff, stagedChanges } = useRepositoryStore();
+  const { selectedFile, selectFile, getFileDiff, stagedChanges, commits, selectedCommitHash } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
   const [diff, setDiff] = useState<GitFileDiff | null>(null);
   const [loading, setLoading] = useState(false);
+  const selectedCommit = commits.find((commit) => commit.hash === selectedCommitHash) ?? null;
 
   useEffect(() => {
     if (!selectedFile) {
@@ -31,7 +32,27 @@ export function ContextPanel() {
   }, [selectedFile, getFileDiff, stagedChanges]);
 
   if (!selectedFile) {
-    return null;
+    if (!selectedCommit) return null;
+    return (
+      <div className={styles.panel}>
+        <div className={styles.header}>
+          <h3>{t.fileDetails}</h3>
+          <button className={styles.closeBtn} onClick={() => selectFile(null)} title={t.btnClosePanel}>
+            x
+          </button>
+        </div>
+        <div className={styles.content} style={{ padding: 20 }}>
+          <div style={{ marginBottom: 12, color: 'var(--text-secondary)' }}>
+            <div><strong>{selectedCommit.shortHash}</strong></div>
+            <div>{selectedCommit.message}</div>
+            <div>{selectedCommit.author} | {selectedCommit.date}</div>
+          </div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+            Parents: {selectedCommit.parentHashes.length ? selectedCommit.parentHashes.join(', ') : 'None (root commit)'}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

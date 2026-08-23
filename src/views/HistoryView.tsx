@@ -2,18 +2,20 @@ import React from 'react';
 import { useRepositoryStore } from '../store';
 import { formatDate, shortHash, stringToColor } from '../utils/format';
 import styles from './HistoryView.module.css';
+import { useUiTranslation } from '../i18n/ui-translations';
 
 export default function HistoryView() {
   const { commits, selectedCommitHash, selectCommit } = useRepositoryStore();
+  const t = useUiTranslation();
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div className={styles.colGraph}>Graph</div>
-        <div className={styles.colMessage}>Message</div>
-        <div className={styles.colAuthor}>Author</div>
-        <div className={styles.colDate}>Date</div>
-        <div className={styles.colHash}>Hash</div>
+        <div className={styles.colGraph}>{t('graph')}</div>
+        <div className={styles.colMessage}>{t('message')}</div>
+        <div className={styles.colAuthor}>{t('author')}</div>
+        <div className={styles.colDate}>{t('date')}</div>
+        <div className={styles.colHash}>{t('hash')}</div>
       </div>
       
       <div className={styles.commitList}>
@@ -41,6 +43,11 @@ export default function HistoryView() {
                   {ref.name}
                 </span>
               ))}
+              {commit.parentHashes.length > 0 && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Parents: {commit.parentHashes.map((parent) => shortHash(parent)).join(', ')}
+                </div>
+              )}
             </div>
             
             <div className={styles.colAuthor}>

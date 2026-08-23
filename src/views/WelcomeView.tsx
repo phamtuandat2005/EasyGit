@@ -9,6 +9,10 @@ function getRecents(): string[] {
   catch { return []; }
 }
 
+function isValidRecentPath(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 function addRecent(path: string) {
   const recents = getRecents().filter(p => p !== path);
   localStorage.setItem(RecentKey, JSON.stringify([path, ...recents].slice(0, 10)));
@@ -16,7 +20,7 @@ function addRecent(path: string) {
 
 export function WelcomeView() {
   const { loadRepository, isLoadingRepo, repoError } = useRepositoryStore();
-  const [recents] = useState(getRecents);
+  const [recents] = useState(() => getRecents().filter(isValidRecentPath));
   const [isCloningMode, setIsCloningMode] = useState(false);
   const [cloneUrl, setCloneUrl] = useState('');
   const [isCloning, setIsCloning] = useState(false);
@@ -46,7 +50,8 @@ export function WelcomeView() {
 
     // Extract repo name from URL to append to destPath
     // e.g. https://github.com/user/repo.git -> repo
-    let repoName = cloneUrl.trim().split('/').pop() || 'repo';
+    const safeCloneUrl = cloneUrl.trim();
+    let repoName = safeCloneUrl.includes('/') ? safeCloneUrl.split('/').pop() || 'repo' : 'repo';
     if (repoName.endsWith('.git')) {
       repoName = repoName.slice(0, -4);
     }
@@ -61,7 +66,7 @@ export function WelcomeView() {
 
     setIsCloning(true);
     try {
-      const result = await electron?.git.clone(cloneUrl.trim(), destPath);
+      const result = await electron?.git.clone(safeCloneUrl, destPath);
       if (result?.success) {
         const ok = await loadRepository(destPath);
         if (ok) {
@@ -162,7 +167,7 @@ export function WelcomeView() {
                     <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/>
                   </svg>
                   <div className={styles.recentInfo}>
-                    <span className={styles.recentName}>{p.split(/[\\/]/).pop()}</span>
+                    <span className={styles.recentName}>{p.split(/[\\/]/).pop() ?? p}</span>
                     <span className={styles.recentPath}>{p}</span>
                   </div>
                 </li>

@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRepositoryStore } from '../../store';
 import type { GitChangedFile } from '../../types/git';
 import { getStatusLetter } from '../../utils/format';
 import { Button } from '../ui/Button';
 import styles from './ChangedFileRow.module.css';
+import { useUiTranslation } from '../../i18n/ui-translations';
 
 interface ChangedFileRowProps {
   file: GitChangedFile;
 }
 
 export function ChangedFileRow({ file }: ChangedFileRowProps) {
-  const { stageFile, unstageFile, selectFile, selectedFile } = useRepositoryStore();
+  const { stageFile, unstageFile, discardFile, selectFile, selectedFile } = useRepositoryStore();
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const t = useUiTranslation();
 
   const handleToggleStage = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -53,10 +56,41 @@ export function ChangedFileRow({ file }: ChangedFileRowProps) {
       </div>
       
       <div className={styles.actions}>
-        {file.staged ? (
-          <Button variant="ghost" size="sm" onClick={() => unstageFile(file.path)} icon="−">Unstage</Button>
+        {confirmDiscard ? (
+          <>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={async (e) => {
+                e.stopPropagation();
+                await discardFile(file.path);
+                setConfirmDiscard(false);
+              }}
+            >
+              {t('confirm')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setConfirmDiscard(false); }}
+            >
+              {t('cancel')}
+            </Button>
+          </>
         ) : (
-          <Button variant="ghost" size="sm" onClick={() => stageFile(file.path)} icon="+">Stage</Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); setConfirmDiscard(true); }}
+            title={t('discard')}
+          >
+            {t('discard')}
+          </Button>
+        )}
+        {file.staged ? (
+          <Button variant="ghost" size="sm" onClick={() => unstageFile(file.path)} icon="−">{t('unstage')}</Button>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={() => stageFile(file.path)} icon="+">{t('stage')}</Button>
         )}
       </div>
     </div>

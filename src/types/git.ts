@@ -144,3 +144,62 @@ export interface GraphData {
   edges: GraphEdge[];
   maxColumns: number;
 }
+
+export interface GitErrorMeta {
+  kind?: 'auth' | 'network' | 'conflict' | 'missing_repo' | 'invalid_ref' | 'validation' | 'unknown';
+  actionable?: string;
+  command?: string[];
+}
+
+export interface GitResult<T = undefined> {
+  success: boolean;
+  data?: T;
+  stdout?: string;
+  stderr?: string;
+  code?: number | string;
+  error?: string;
+  meta?: GitErrorMeta;
+}
+
+export type GitOperationType =
+  | 'stage'
+  | 'unstage'
+  | 'stageAll'
+  | 'unstageAll'
+  | 'commit'
+  | 'push'
+  | 'pull'
+  | 'fetch'
+  | 'createBranch'
+  | 'checkout'
+  | 'merge'
+  | 'stash'
+  | 'stashPop'
+  | 'stashApply'
+  | 'stashDrop'
+  | 'discard'
+  | 'reset'
+  | 'revert';
+
+export interface GitOperationDescriptor {
+  type: GitOperationType;
+  command: string;
+  explanation?: string;
+}
+
+export type GitOperationStatus = 'running' | 'success' | 'warning' | 'error';
+
+export interface GitOperationLogEntry {
+  id: string;
+  type: GitOperationType;
+  command: string;
+  explanation?: string;
+  output: string[];
+  status: GitOperationStatus;
+  startedAt: string;
+  finishedAt?: string;
+  durationMs?: number;
+  exitCode?: number | string;
+  stderr?: string;
+  error?: string;
+}

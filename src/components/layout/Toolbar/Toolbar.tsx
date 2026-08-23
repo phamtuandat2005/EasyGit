@@ -23,7 +23,7 @@ const IconRefresh = () => (
 export function Toolbar() {
   const { path, push, pull, fetch, refreshStatus } = useRepositoryStore();
   const { settings } = useSettingsStore();
-  const { sidebarCollapsed, toggleSidebar, addToast } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, addToast, gitTerminalOpen, openGitTerminal } = useUIStore();
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
@@ -97,6 +97,11 @@ export function Toolbar() {
           <Button variant="ghost" size="sm" icon="🔄" onClick={() => handleNetworkAction('fetch')} disabled={isSyncing}>{t.btnFetch}</Button>
           <div className={styles.divider} />
           <Button variant="ghost" size="sm" icon="📦" onClick={() => handleNetworkAction('stash')} disabled={isSyncing}>{t.btnStash}</Button>
+          {!gitTerminalOpen && (
+            <Button variant="ghost" size="sm" icon=">_" onClick={openGitTerminal} title="Open Git Operation Terminal">
+              Terminal
+            </Button>
+          )}
         </div>
       </div>
       

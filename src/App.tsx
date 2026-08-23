@@ -15,6 +15,8 @@ import HistoryView from './views/HistoryView';
 import BranchesView from './views/BranchesView';
 import GraphView from './views/GraphView';
 import StashView from './views/StashView';
+import TagsView from './views/TagsView';
+import RemotesView from './views/RemotesView';
 import { WelcomeView } from './views/WelcomeView';
 import styles from './App.module.css';
 
@@ -113,7 +115,9 @@ export function App() {
             {activeView === 'branches' && <BranchesView />}
             {activeView === 'graph' && <GraphView />}
             {activeView === 'stash' && <StashView />}
-            {activeView !== 'changes' && activeView !== 'history' && activeView !== 'branches' && activeView !== 'graph' && activeView !== 'stash' && (
+            {activeView === 'tags' && <TagsView />}
+            {activeView === 'remotes' && <RemotesView />}
+            {activeView !== 'changes' && activeView !== 'history' && activeView !== 'branches' && activeView !== 'graph' && activeView !== 'stash' && activeView !== 'tags' && activeView !== 'remotes' && (
               <div style={{ padding: '20px' }}>Content for view: {activeView}</div>
             )}
           </Suspense>

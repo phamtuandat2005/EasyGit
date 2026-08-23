@@ -3,10 +3,12 @@ import { useRepositoryStore, useUIStore } from '../store';
 import { formatDate } from '../utils/format';
 import { Button } from '../components/ui/Button';
 import styles from './StashView.module.css';
+import { useUiTranslation } from '../i18n/ui-translations';
 
 export default function StashView() {
   const { stashes, stash, stashPop, stashApply, stashDrop } = useRepositoryStore();
   const { addToast } = useUIStore();
+  const ui = useUiTranslation();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [confirmDrop, setConfirmDrop] = useState<number | null>(null);
 
@@ -19,40 +21,40 @@ export default function StashView() {
 
   const handleStashAll = async () => {
     const ok = await withLoading('save', () => stash());
-    if (ok) addToast({ type: 'success', title: 'Đã stash thay đổi', message: 'Các thay đổi đã được lưu tạm vào stash.' });
-    else addToast({ type: 'error', title: 'Stash thất bại', message: 'Không có thay đổi để stash hoặc đã có lỗi xảy ra.' });
+    if (ok) addToast({ type: 'success', title: ui('stashSaveSuccess') });
+    else addToast({ type: 'error', title: ui('stashSaveFailed') });
   };
 
   const handleApply = async (index: number) => {
     const ok = await withLoading(`apply-${index}`, () => stashApply(index));
-    if (ok) addToast({ type: 'success', title: `Đã apply stash@{${index}}` });
-    else addToast({ type: 'error', title: 'Apply thất bại' });
+    if (ok) addToast({ type: 'success', title: `${ui('apply')} stash@{${index}}` });
+    else addToast({ type: 'error', title: ui('applyFailed') });
   };
 
   const handlePop = async (index: number) => {
     const ok = await withLoading(`pop-${index}`, () => stashPop(index));
-    if (ok) addToast({ type: 'success', title: `Đã pop stash@{${index}}`, message: 'Thay đổi đã được khôi phục và stash bị xoá.' });
-    else addToast({ type: 'error', title: 'Pop thất bại', message: 'Có thể xảy ra xung đột (conflict).' });
+    if (ok) addToast({ type: 'success', title: `${ui('pop')} stash@{${index}}` });
+    else addToast({ type: 'error', title: ui('popFailed') });
   };
 
   const handleDrop = async (index: number) => {
     const ok = await withLoading(`drop-${index}`, () => stashDrop(index));
     setConfirmDrop(null);
-    if (ok) addToast({ type: 'success', title: `Đã xoá stash@{${index}}` });
-    else addToast({ type: 'error', title: 'Xoá stash thất bại' });
+    if (ok) addToast({ type: 'success', title: `${ui('dropSuccess')} stash@{${index}}` });
+    else addToast({ type: 'error', title: ui('dropFailed') });
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>Stashes</h2>
+        <h2>{ui('stashes')}</h2>
         <Button
           variant="secondary"
           icon="📦"
           disabled={loadingAction === 'save'}
           onClick={handleStashAll}
         >
-          {loadingAction === 'save' ? 'Đang lưu...' : 'Stash All Changes'}
+          {loadingAction === 'save' ? ui('loading') : ui('stashAllChanges')}
         </Button>
       </div>
 
@@ -60,8 +62,8 @@ export default function StashView() {
         {stashes.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📦</div>
-            <h3>No stashes found</h3>
-            <p>You haven't stashed any changes yet.</p>
+            <h3>{ui('noStashes')}</h3>
+            <p>{ui('noStashesDesc')}</p>
           </div>
         ) : (
           <div className={styles.stashList}>
@@ -81,7 +83,7 @@ export default function StashView() {
                 </div>
 
                 <div className={styles.stashStats}>
-                  <span className={styles.filesChanged}>{stash.filesChanged} files</span>
+                  <span className={styles.filesChanged}>{stash.filesChanged}</span>
                   <div className={styles.statsDetails}>
                     <span className={styles.additions}>+{stash.additions}</span>
                     <span className={styles.deletions}>-{stash.deletions}</span>
@@ -95,7 +97,7 @@ export default function StashView() {
                     disabled={!!loadingAction}
                     onClick={() => handleApply(stash.index)}
                   >
-                    {loadingAction === `apply-${stash.index}` ? '...' : 'Apply'}
+                    {loadingAction === `apply-${stash.index}` ? '...' : ui('apply')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -103,15 +105,15 @@ export default function StashView() {
                     disabled={!!loadingAction}
                     onClick={() => handlePop(stash.index)}
                   >
-                    {loadingAction === `pop-${stash.index}` ? '...' : 'Pop'}
+                    {loadingAction === `pop-${stash.index}` ? '...' : ui('pop')}
                   </Button>
 
                   {confirmDrop === stash.index ? (
                     <>
                       <Button variant="danger" size="sm" disabled={!!loadingAction} onClick={() => handleDrop(stash.index)}>
-                        {loadingAction === `drop-${stash.index}` ? '...' : 'Xác nhận'}
+                        {loadingAction === `drop-${stash.index}` ? '...' : ui('confirm')}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setConfirmDrop(null)}>Huỷ</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setConfirmDrop(null)}>{ui('cancel')}</Button>
                     </>
                   ) : (
                     <Button
@@ -120,7 +122,7 @@ export default function StashView() {
                       disabled={!!loadingAction}
                       onClick={() => setConfirmDrop(stash.index)}
                     >
-                      Drop
+                      {ui('drop')}
                     </Button>
                   )}
                 </div>

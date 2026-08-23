@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUIStore, useRepositoryStore, useSettingsStore } from '../../../store';
 import { TRANSLATIONS } from '../../../i18n/translations';
+import { useUiTranslation } from '../../../i18n/ui-translations';
 import styles from './Sidebar.module.css';
 
 // ─── SVG Icons (VS Code style) ───────────────────────────────────────────────
@@ -107,6 +108,7 @@ export function Sidebar() {
   const { stagedChanges, unstagedChanges, commits, branches, stashes } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
+  const ui = useUiTranslation();
 
   const totalChanges = stagedChanges.length + unstagedChanges.length;
 
@@ -118,7 +120,7 @@ export function Sidebar() {
           title={t.navWorkspace} 
           defaultExpanded 
           rightAction={
-            <button className={styles.toggleBtn} onClick={toggleSidebar} title="Close Sidebar" style={{ margin: 0, padding: 0, width: 20, height: 20 }}>
+            <button className={styles.toggleBtn} onClick={toggleSidebar} title={ui('collapse')} style={{ margin: 0, padding: 0, width: 20, height: 20 }}>
               <IconLayoutSidebar />
             </button>
           }

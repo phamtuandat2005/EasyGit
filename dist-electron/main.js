@@ -38,6 +38,23 @@ async function git(repoPath, args) {
   });
   return stdout.trim();
 }
+function ok(data, stdout = "") {
+  return { success: true, data, stdout, stderr: "", code: 0 };
+}
+function fail(command, error) {
+  return {
+    success: false,
+    stdout: typeof (error == null ? void 0 : error.stdout) === "string" ? error.stdout : "",
+    stderr: typeof (error == null ? void 0 : error.stderr) === "string" ? error.stderr : "",
+    code: typeof (error == null ? void 0 : error.code) === "number" || typeof (error == null ? void 0 : error.code) === "string" ? error.code : void 0,
+    error: (error == null ? void 0 : error.message) ?? String(error),
+    meta: {
+      kind: /CONFLICT|conflict/i.test((error == null ? void 0 : error.message) ?? "") ? "conflict" : "unknown",
+      actionable: /auth|permission/i.test((error == null ? void 0 : error.message) ?? "") ? "Check credentials or repository permissions." : "Inspect stderr and retry the operation.",
+      command
+    }
+  };
+}
 function buildMenu() {
   const isMac = process.platform === "darwin";
   const template = [
@@ -183,9 +200,9 @@ electron.app.whenReady().then(() => {
   electron.ipcMain.handle("git:openRepo", async (_, repoPath) => {
     try {
       const root = await git(repoPath, ["rev-parse", "--show-toplevel"]);
-      return { success: true, root: root.trim() };
+      return ok({ root: root.trim() });
     } catch (e) {
-      return { success: false, error: e.message };
+      return fail(["rev-parse", "--show-toplevel"], e);
     }
   });
   electron.ipcMain.handle("git:log", async (_, repoPath, maxCount = 200) => {
@@ -193,17 +210,17 @@ electron.app.whenReady().then(() => {
       const SEP = "|||";
       const fmt = `%H${SEP}%h${SEP}%an${SEP}%ae${SEP}%aI${SEP}%s${SEP}%P${SEP}%D`;
       const output = await git(repoPath, ["log", `--max-count=${maxCount}`, `--format=${fmt}`]);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e) {
-      return { success: false, error: e.message };
+      return fail(["log", `--max-count=${maxCount}`], e);
     }
   });
   electron.ipcMain.handle("git:status", async (_, repoPath) => {
     try {
       const output = await git(repoPath, ["status", "--porcelain=v1", "-u"]);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e) {
-      return { success: false, error: e.message };
+      return fail(["status", "--porcelain=v1", "-u"], e);
     }
   });
   electron.ipcMain.handle("git:branches", async (_, repoPath) => {
@@ -214,9 +231,9 @@ electron.app.whenReady().then(() => {
         "-vv",
         "--format=%(if)%(HEAD)%(then)*%(else) %(end)|%(refname:short)|%(objectname:short)|%(upstream:short)|%(upstream:track)"
       ]);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e) {
-      return { success: false, error: e.message };
+      return fail(["branch", "-a", "-vv"], e);
     }
   });
   electron.ipcMain.handle("git:stashes", async (_, repoPath) => {

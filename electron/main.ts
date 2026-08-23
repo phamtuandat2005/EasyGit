@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import { join } from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import type { GitResult } from '../src/types/git';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,6 +19,25 @@ async function git(repoPath: string, args: string[]): Promise<string> {
     encoding: 'utf8',
   });
   return stdout.trim();
+}
+
+function ok<T = undefined>(data?: T, stdout = ''): GitResult<T> {
+  return { success: true, data, stdout, stderr: '', code: 0 };
+}
+
+function fail(command: string[], error: any): GitResult {
+  return {
+    success: false,
+    stdout: typeof error?.stdout === 'string' ? error.stdout : '',
+    stderr: typeof error?.stderr === 'string' ? error.stderr : '',
+    code: typeof error?.code === 'number' || typeof error?.code === 'string' ? error.code : undefined,
+    error: error?.message ?? String(error),
+    meta: {
+      kind: /CONFLICT|conflict/i.test(error?.message ?? '') ? 'conflict' : 'unknown',
+      actionable: /auth|permission/i.test(error?.message ?? '') ? 'Check credentials or repository permissions.' : 'Inspect stderr and retry the operation.',
+      command,
+    },
+  };
 }
 
 // ── Menu ──────────────────────────────────────────────────────────────────────
@@ -167,9 +187,9 @@ app.whenReady().then(() => {
   ipcMain.handle('git:openRepo', async (_, repoPath: string) => {
     try {
       const root = await git(repoPath, ['rev-parse', '--show-toplevel']);
-      return { success: true, root: root.trim() };
+      return ok({ root: root.trim() });
     } catch (e: any) {
-      return { success: false, error: e.message };
+      return fail(['rev-parse', '--show-toplevel'], e);
     }
   });
 
@@ -180,9 +200,9 @@ app.whenReady().then(() => {
       const SEP = '|||';
       const fmt = `%H${SEP}%h${SEP}%an${SEP}%ae${SEP}%aI${SEP}%s${SEP}%P${SEP}%D`;
       const output = await git(repoPath, ['log', `--max-count=${maxCount}`, `--format=${fmt}`]);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e: any) {
-      return { success: false, error: e.message };
+      return fail(['log', `--max-count=${maxCount}`], e);
     }
   });
 
@@ -190,9 +210,9 @@ app.whenReady().then(() => {
   ipcMain.handle('git:status', async (_, repoPath: string) => {
     try {
       const output = await git(repoPath, ['status', '--porcelain=v1', '-u']);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e: any) {
-      return { success: false, error: e.message };
+      return fail(['status', '--porcelain=v1', '-u'], e);
     }
   });
 
@@ -203,9 +223,9 @@ app.whenReady().then(() => {
         'branch', '-a', '-vv',
         '--format=%(if)%(HEAD)%(then)*%(else) %(end)|%(refname:short)|%(objectname:short)|%(upstream:short)|%(upstream:track)',
       ]);
-      return { success: true, output };
+      return ok(output, output);
     } catch (e: any) {
-      return { success: false, error: e.message };
+      return fail(['branch', '-a', '-vv'], e);
     }
   });
 

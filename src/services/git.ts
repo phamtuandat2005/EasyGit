@@ -68,18 +68,19 @@ export function parseStatus(output: string): { staged: GitChangedFile[]; unstage
     const statusMap: Record<string, GitChangedFile['status']> = {
       M: 'modified', A: 'added', D: 'deleted', R: 'renamed', C: 'copied', '?': 'untracked', '!': 'ignored',
     };
+    const isConflict = indexStatus !== ' ' && workStatus !== ' ' && indexStatus !== '?' && workStatus !== '?';
 
     if (indexStatus !== ' ' && indexStatus !== '?') {
       staged.push({
         path, filename, directory,
-        status: statusMap[indexStatus] ?? 'modified',
+        status: isConflict ? 'conflict' : (statusMap[indexStatus] ?? 'modified'),
         additions: 0, deletions: 0, staged: true,
       });
     }
     if (workStatus !== ' ') {
       unstaged.push({
         path, filename, directory,
-        status: workStatus === '?' ? 'untracked' : (statusMap[workStatus] ?? 'modified'),
+        status: isConflict ? 'conflict' : (workStatus === '?' ? 'untracked' : (statusMap[workStatus] ?? 'modified')),
         additions: 0, deletions: 0, staged: false,
       });
     }

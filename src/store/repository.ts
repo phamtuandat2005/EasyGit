@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import type { RepositoryState, GitChangedFile, GitCommit, GitBranch, GitStash, GitRemote, GitTag } from '../types/git';
 import { parseLog, parseStatus, parseBranches, parseStashes, parseRemotes, parseTags, parseDiff } from '../services/git';
 import type { GitFileDiff } from '../types/git';
+import { useUIStore } from './ui';
 // ── Electron IPC bridge (undefined in browser) ─────────────────────────────
 const electronGit = (window as any).electron?.git;
+const gitText = (result: any) => result?.stdout ?? result?.output ?? result?.data ?? '';
+const gitErrText = (result: any) => result?.stderr ?? result?.error ?? '';
 
 // ── Store interface ────────────────────────────────────────────────────────────
 interface RepositoryStore extends RepositoryState {
@@ -85,6 +88,11 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     set({ isLoadingRepo: true, repoError: null });
 
     try {
+      if (typeof repoPath !== 'string' || !repoPath.trim()) {
+        set({ isLoadingRepo: false, repoError: 'Repository path is missing or invalid.' });
+        return false;
+      }
+
       // 1. Validate it's a git repo
       if (electronGit) {
         const validation = await electronGit.openRepo(repoPath);
@@ -92,8 +100,14 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
           set({ isLoadingRepo: false, repoError: `Not a git repository: ${repoPath}` });
           return false;
         }
-        // Use the root path (in case user opened a subdirectory)
-        repoPath = validation.root;
+        // Use the root path (in case user opened a subdirectory).
+        // Keep the legacy fallback while all IPC callers migrate to GitResult.data.
+        const repositoryRoot = validation.data?.root ?? validation.root;
+        if (typeof repositoryRoot !== 'string' || !repositoryRoot.trim()) {
+          set({ isLoadingRepo: false, repoError: 'Git returned an invalid repository root.' });
+          return false;
+        }
+        repoPath = repositoryRoot;
       }
 
       const name = repoPath.split(/[\\/]/).pop() ?? repoPath;
@@ -112,13 +126,13 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
         ]);
 
       // 3. Parse everything
-      const commits: GitCommit[] = logRes?.success ? parseLog(logRes.output) : [];
-      const { staged, unstaged } = statusRes?.success ? parseStatus(statusRes.output) : { staged: [], unstaged: [] };
-      const allBranches: GitBranch[] = branchRes?.success ? parseBranches(branchRes.output) : [];
-      const stashes: GitStash[] = stashRes?.success ? parseStashes(stashRes.output) : [];
-      const remotes: GitRemote[] = remoteRes?.success ? parseRemotes(remoteRes.output) : [];
-      const tags: GitTag[] = tagRes?.success ? parseTags(tagRes.output) : [];
-      const currentBranch: string = branchNameRes?.success ? branchNameRes.output.trim() : '';
+      const commits: GitCommit[] = logRes?.success ? parseLog(gitText(logRes)) : [];
+      const { staged, unstaged } = statusRes?.success ? parseStatus(gitText(statusRes)) : { staged: [], unstaged: [] };
+      const allBranches: GitBranch[] = branchRes?.success ? parseBranches(gitText(branchRes)) : [];
+      const stashes: GitStash[] = stashRes?.success ? parseStashes(gitText(stashRes)) : [];
+      const remotes: GitRemote[] = remoteRes?.success ? parseRemotes(gitText(remoteRes)) : [];
+      const tags: GitTag[] = tagRes?.success ? parseTags(gitText(tagRes)) : [];
+      const currentBranch: string = branchNameRes?.success ? gitText(branchNameRes).trim() : '';
       const ahead: number = syncRes?.success ? syncRes.ahead : 0;
       const behind: number = syncRes?.success ? syncRes.behind : 0;
 
@@ -162,8 +176,8 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
       electronGit.syncStatus(path),
     ]);
 
-    const { staged, unstaged } = statusRes?.success ? parseStatus(statusRes.output) : { staged: [], unstaged: [] };
-    const commits = logRes?.success ? parseLog(logRes.output) : get().commits;
+    const { staged, unstaged } = statusRes?.success ? parseStatus(gitText(statusRes)) : { staged: [], unstaged: [] };
+    const commits = logRes?.success ? parseLog(gitText(logRes)) : get().commits;
     const ahead = syncRes?.success ? syncRes.ahead : get().ahead;
     const behind = syncRes?.success ? syncRes.behind : get().behind;
 
@@ -177,23 +191,29 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   createBranch: async (name: string) => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('createBranch', { name, startPoint: 'HEAD' });
     const result = await electronGit.createBranch(path, name);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await electronGit.checkout(path, name); // Auto-checkout
       await get().loadRepository(path);
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
   checkout: async (branch: string) => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('checkout', { branch });
     const result = await electronGit.checkout(path, branch);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().loadRepository(path);
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
@@ -223,8 +243,10 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   mergeBranch: async (branch: string, noFF = false) => {
     const { path } = get();
     if (!path || !electronGit) return { success: false, error: 'No repository open' };
+    const opId = useUIStore.getState().beginGitOperation('merge', { branch, noFF });
     const result = await electronGit.merge(path, branch, noFF);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().loadRepository(path);
       return { success: true };
     }
@@ -235,6 +257,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
       set({ isMerging: true, conflictedFiles, status: 'conflict' });
       await get().refreshStatus();
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return { success: false, hasConflict: result?.hasConflict, error: result?.error };
   },
 
@@ -274,7 +297,9 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const { path } = get();
     if (!path) return;
     if (electronGit) {
+      const opId = useUIStore.getState().beginGitOperation('stage', { file: filePath });
       await electronGit.stage(path, filePath);
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: '' });
       await get().refreshStatus();
     } else {
       // Fallback: optimistic update in browser
@@ -293,7 +318,9 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const { path } = get();
     if (!path) return;
     if (electronGit) {
+      const opId = useUIStore.getState().beginGitOperation('unstage', { file: filePath });
       await electronGit.unstage(path, filePath);
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: '' });
       await get().refreshStatus();
     } else {
       set((state) => {
@@ -311,7 +338,9 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const { path } = get();
     if (!path) return;
     if (electronGit) {
+      const opId = useUIStore.getState().beginGitOperation('stageAll');
       await electronGit.stageAll(path);
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: '' });
       await get().refreshStatus();
     } else {
       set((state) => ({
@@ -325,7 +354,9 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const { path } = get();
     if (!path) return;
     if (electronGit) {
+      const opId = useUIStore.getState().beginGitOperation('unstageAll');
       await electronGit.unstageAll(path);
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: '' });
       await get().refreshStatus();
     } else {
       set((state) => ({
@@ -339,11 +370,14 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   discardFile: async (filePath: string) => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('discard', { file: filePath });
     const result = await electronGit.discardFile(path, filePath);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
@@ -351,11 +385,14 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   commitChanges: async (message: string) => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('commit', { message });
     const result = await electronGit.commit(path, message);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
@@ -363,33 +400,42 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   push: async () => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('push', { remote: 'origin', branch: get().currentBranch || 'main' });
     const result = await electronGit.push(path);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
   pull: async () => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('pull', { remote: 'origin', branch: get().currentBranch || 'main' });
     const result = await electronGit.pull(path);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
   fetch: async () => {
     const { path } = get();
     if (!path || !electronGit) return false;
+    const opId = useUIStore.getState().beginGitOperation('fetch', { remote: 'origin' });
     const result = await electronGit.fetch(path);
     if (result?.success) {
+      useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
       await get().refreshStatus();
       return true;
     }
+    useUIStore.getState().finishGitOperation(opId, { success: false, stderr: gitErrText(result), error: result?.error, code: result?.code });
     return false;
   },
 
@@ -480,7 +526,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     if (!path || !electronGit) return null;
     const result = await electronGit.diff(path, filePath, staged);
     if (result?.success) {
-      return parseDiff(result.output, filePath);
+      return parseDiff(gitText(result), filePath);
     }
     return null;
   },

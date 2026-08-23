@@ -48,6 +48,7 @@ export function shortHash(hash: string, length = 7): string {
  * Get initials from a name (e.g., "Sarah Chen" → "SC")
  */
 export function getInitials(name: string): string {
+  if (!name) return '';
   return name
     .split(' ')
     .map(part => part[0])
@@ -84,6 +85,7 @@ export function formatFileSize(bytes: number): string {
  * Format a file path to show only the last N segments
  */
 export function shortenPath(path: string, maxSegments = 3): string {
+  if (!path) return '';
   const segments = path.split('/');
   if (segments.length <= maxSegments) return path;
   return '…/' + segments.slice(-maxSegments).join('/');
@@ -93,6 +95,7 @@ export function shortenPath(path: string, maxSegments = 3): string {
  * Get file extension from a path
  */
 export function getFileExtension(path: string): string {
+  if (!path) return '';
   const parts = path.split('.');
   return parts.length > 1 ? parts[parts.length - 1] : '';
 }
