@@ -1,60 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRepositoryStore } from '../store';
 import { formatDate, shortHash, stringToColor } from '../utils/format';
-import type { GitCommit, GraphData, GraphNode, GraphEdge } from '../types/git';
+import type { GraphData } from '../types/git';
+import { buildGraphData } from '../services/graph';
 import styles from './GraphView.module.css';
-
-// ── Graph Layout Logic ──
-// This is a simplified version of DAG rendering for the prototype.
-function computeGraphData(commits: GitCommit[]): GraphData {
-  const nodes: GraphNode[] = [];
-  const edges: GraphEdge[] = [];
-  
-  const activeBranches: string[] = [];
-  let maxCol = 0;
-
-  // First pass: Assign nodes to columns (simplified by author for demo)
-  commits.forEach((commit, rowIndex) => {
-    let col = activeBranches.indexOf(commit.author);
-    if (col === -1) {
-      col = activeBranches.length;
-      activeBranches.push(commit.author);
-    }
-    
-    maxCol = Math.max(maxCol, col);
-    
-    nodes.push({
-      commit,
-      row: rowIndex,
-      column: col,
-      color: stringToColor(commit.author),
-    });
-  });
-
-  // Second pass: Draw edges
-  nodes.forEach(node => {
-    node.commit.parentHashes.forEach((parentHash, i) => {
-      // Find parent by full hash or short hash (mock data uses short hashes for parents)
-      const parentIndex = nodes.findIndex(n => 
-        n.commit.hash.startsWith(parentHash) || n.commit.shortHash === parentHash
-      );
-      
-      if (parentIndex !== -1) {
-        const parentNode = nodes[parentIndex];
-        edges.push({
-          fromRow: node.row,
-          fromCol: node.column,
-          toRow: parentNode.row,
-          toCol: parentNode.column,
-          color: node.color,
-          isMerge: i > 0,
-        });
-      }
-    });
-  });
-
-  return { nodes, edges, maxColumns: maxCol + 1 };
-}
 
 export default function GraphView() {
   const { commits, selectedCommitHash, selectCommit } = useRepositoryStore();
@@ -66,7 +15,7 @@ export default function GraphView() {
   const colWidth = 20;
 
   useEffect(() => {
-    setGraphData(computeGraphData(commits));
+    setGraphData(buildGraphData(commits));
   }, [commits]);
 
   useEffect(() => {

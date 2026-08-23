@@ -41,6 +41,11 @@ export default function HistoryView() {
                   {ref.name}
                 </span>
               ))}
+              {commit.parentHashes.length > 0 && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Parents: {commit.parentHashes.map((parent) => shortHash(parent)).join(', ')}
+                </div>
+              )}
             </div>
             
             <div className={styles.colAuthor}>

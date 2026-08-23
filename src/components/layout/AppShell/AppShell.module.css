@@ -61,6 +61,12 @@
   flex-direction: column;
 }
 
+.viewContent {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .contextPanel {
   flex-shrink: 0;
   background-color: var(--bg-panel);

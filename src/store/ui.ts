@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { ViewType, ContextPanelState, ModalState, ToastMessage } from '../types/ui';
+import type { GitOperationLogEntry, GitOperationStatus, GitOperationType } from '../types/git';
+import { describeGitOperation } from '../services/git-operations';
 
 interface UIStore {
   // Navigation
@@ -40,6 +42,23 @@ interface UIStore {
   // Diff view mode
   diffViewMode: 'unified' | 'split';
   setDiffViewMode: (mode: 'unified' | 'split') => void;
+
+  // Git Operation Terminal
+  gitTerminalOpen: boolean;
+  gitTerminalExpanded: boolean;
+  gitOperations: GitOperationLogEntry[];
+  openGitTerminal: () => void;
+  toggleGitTerminal: () => void;
+  clearGitTerminal: () => void;
+  beginGitOperation: (type: GitOperationType, args?: Record<string, any>) => string;
+  appendGitOperationOutput: (id: string, line: string) => void;
+  finishGitOperation: (id: string, result: {
+    success: boolean;
+    stdout?: string;
+    stderr?: string;
+    code?: number | string;
+    error?: string;
+  }) => void;
 }
 
 let toastCounter = 0;
@@ -96,4 +115,49 @@ export const useUIStore = create<UIStore>((set) => ({
   // Diff view mode
   diffViewMode: 'unified',
   setDiffViewMode: (mode) => set({ diffViewMode: mode }),
+
+  // Git Operation Terminal
+  gitTerminalOpen: true,
+  gitTerminalExpanded: true,
+  gitOperations: [],
+  openGitTerminal: () => set({ gitTerminalOpen: true, gitTerminalExpanded: true }),
+  toggleGitTerminal: () => set((s) => ({ gitTerminalOpen: !s.gitTerminalOpen })),
+  clearGitTerminal: () => set({ gitOperations: [] }),
+  beginGitOperation: (type, args = {}) => {
+    const descriptor = describeGitOperation(type, args);
+    const id = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const entry: GitOperationLogEntry = {
+      id,
+      type,
+      command: descriptor.command,
+      explanation: descriptor.explanation,
+      output: [],
+      status: 'running',
+      startedAt: new Date().toISOString(),
+    };
+    set((s) => ({ gitTerminalOpen: true, gitOperations: [entry, ...s.gitOperations].slice(0, 20) }));
+    return id;
+  },
+  appendGitOperationOutput: (id, line) => set((s) => ({
+    gitOperations: s.gitOperations.map((op) => op.id === id ? { ...op, output: [...op.output, line] } : op),
+  })),
+  finishGitOperation: (id, result) => set((s) => ({
+    gitOperations: s.gitOperations.map((op) => {
+      if (op.id !== id) return op;
+      const started = new Date(op.startedAt).getTime();
+      const finishedAt = new Date().toISOString();
+      const durationMs = Math.max(0, Date.now() - started);
+      const status: GitOperationStatus = result.success ? (result.stderr ? 'warning' : 'success') : 'error';
+      return {
+        ...op,
+        status,
+        finishedAt,
+        durationMs,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.code,
+        error: result.error,
+      } as any;
+    }),
+  })),
 }));

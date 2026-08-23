@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRepositoryStore, useUIStore } from '../../../store';
+import { GitOperationTerminal } from '../../git/GitOperationTerminal';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -52,7 +53,8 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
         </div>
         <div className={styles.workspace}>
           <div className={styles.content}>
-            {children}
+            <div className={styles.viewContent}>{children}</div>
+            <GitOperationTerminal />
           </div>
           {isPanelOpen && (
             <>

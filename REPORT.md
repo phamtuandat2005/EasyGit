@@ -45,8 +45,8 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 
 ## 7. Đề Xuất Các Bước Tiếp Theo
 - Bổ sung/hoàn thiện các bài test (Unit/E2E) cho những luồng hoạt động chính để đảm bảo tính ổn định.
-- Kiểm thử các trường hợp edge-case (ngoại lệ) của Git, ví dụ: Merge Conflict, Rebase, Detached HEAD state.
 - Cải thiện thêm UI/UX (vd: các hiệu ứng chuyển cảnh, micro-animations) để ứng dụng trông chuyên nghiệp và mượt mà hơn.
+- Thực hiện tiếp các Hạng mục trong Phase 2, Phase 3 (Branch Remote, Commit Graph) theo `PLAN.md`.
 
 ## 8. Chi Tiết Tính Năng (Feature Matrix)
 
@@ -61,10 +61,10 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 | **Changes**           | Working Directory            | ✅ Có              | Cải thiện             | 🔴      |
 |                       | Stage File                   | ✅ Có              | Cải thiện             | 🔴      |
 |                       | Unstage File                 | ✅ Có              | Cải thiện             | 🔴      |
-|                       | Diff Viewer                  | ✅ Có              | Làm mạnh hơn          | 🔴      |
+|                       | Diff Viewer                  | ✅ Đã hoàn thiện   | Lấy dữ liệu Git thực  | 🔴      |
 |                       | Stage Hunk                   | ❓ Chưa xác định   | Nên thêm              | 🔴      |
 |                       | Stage Selected Lines         | ❓ Chưa xác định   | Nên thêm              | 🟠      |
-|                       | Discard Changes              | ❓ Chưa xác định   | Nên thêm              | 🟠      |
+|                       | Discard Changes              | ✅ Có              | Tích hợp cảnh báo     | 🟠      |
 | **Commit**            | Create Commit                | ✅ Có theo báo cáo | Cải thiện UX          | 🔴      |
 |                       | Amend Commit                 | ❓ Chưa xác định   | Nên thêm              | 🟡      |
 |                       | Commit History               | ✅ Có              | Cải thiện             | 🟢      |
@@ -72,8 +72,8 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 | **Branches**          | List Branches                | ✅ Có              | Cải thiện             | 🟢      |
 |                       | Create Branch                | ✅ Có              | Cải thiện             | 🔴      |
 |                       | Checkout                     | ✅ Có              | Error handling        | 🔴      |
-|                       | Delete Branch                | ✅ Có              | Confirmation/recovery | 🟡      |
-|                       | Rename Branch                | ❓ Chưa xác định   | Nên thêm              | 🟡      |
+|                       | Delete Branch                | ✅ Có              | Có xác nhận & force   | 🟡      |
+|                       | Rename Branch                | ✅ Có              |                       | 🟡      |
 |                       | Compare Branches             | ❓ Chưa xác định   | Nên thêm              | 🟡      |
 | **Graph**             | Git Graph                    | ✅ Có              | Cải thiện mạnh        | 🔴      |
 |                       | Commit Details               | ❓ Chưa xác định   | Nên thêm              | 🟡      |
@@ -81,11 +81,11 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 |                       | Create Branch from Commit    | ❓ Chưa xác định   | Nên thêm              | 🟡      |
 |                       | Cherry-pick from Graph       | ❓ Chưa xác định   | Nên thêm              | 🟠      |
 |                       | Reset from Graph             | ❓ Chưa xác định   | Nên thêm              | 🟠      |
-| **Merge**             | Merge Branch                 | ❓ Chưa xác định   | **Bắt buộc bổ sung**  | 🔴      |
-|                       | Fast-forward Merge           | ❓ Chưa xác định   | Làm                   | 🔴      |
-|                       | Merge Commit                 | ❓ Chưa xác định   | Làm                   | 🔴      |
-|                       | Merge Conflict Detection     | ❓ Chưa xác định   | **Làm**               | 🔴      |
-|                       | Conflict Resolution UI       | ❓ Chưa xác định   | **Làm**               | 🔴      |
+| **Merge**             | Merge Branch                 | ✅ Có              | Đã tích hợp UI        | 🔴      |
+|                       | Fast-forward Merge           | ✅ Có              | Cờ `--no-ff`          | 🔴      |
+|                       | Merge Commit                 | ✅ Có              |                       | 🔴      |
+|                       | Merge Conflict Detection     | ✅ Có              | Nhận diện `UU`, `AA`  | 🔴      |
+|                       | Conflict Resolution UI       | ✅ Có              | Chọn Ours / Theirs    | 🔴      |
 | **Remote**            | Remote List                  | ❓ Chưa xác định   | Nên thêm              | 🔴      |
 |                       | Add Remote                   | ❓ Chưa xác định   | Nên thêm              | 🔴      |
 |                       | Remove Remote                | ❓ Chưa xác định   | Nên thêm              | 🟡      |
@@ -95,10 +95,10 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 |                       | Push Force Warning           | ❓ Chưa xác định   | Nên thêm              | 🟠      |
 |                       | Ahead / Behind               | ❓ Chưa xác định   | **Nên thêm**          | 🔴      |
 | **Stash**             | Stash List                   | ✅ Có              | Cải thiện             | 🟢      |
-|                       | Create Stash                 | ❓ Chưa xác định   | Kiểm tra              | 🟡      |
-|                       | Apply                        | ❓ Chưa xác định   | Nên thêm              | 🟡      |
-|                       | Pop                          | ❓ Chưa xác định   | Nên thêm              | 🟡      |
-|                       | Drop                         | ❓ Chưa xác định   | Nên thêm              | 🟡      |
+|                       | Create Stash                 | ✅ Có              | Workflow cơ bản       | 🟡      |
+|                       | Apply                        | ✅ Có              | Tích hợp UI           | 🟡      |
+|                       | Pop                          | ✅ Có              | Tích hợp UI           | 🟡      |
+|                       | Drop                         | ✅ Có              | Kèm Modal xác nhận    | 🟡      |
 |                       | Stash → Branch               | ❓ Chưa xác định   | Nên thêm              | 🟢      |
 | **Advanced Git**      | Revert                       | ❓ Chưa xác định   | Nên thêm              | 🟠      |
 |                       | Reset Soft                   | ❓ Chưa xác định   | Nên thêm              | 🟠      |
@@ -147,3 +147,22 @@ Hệ thống Zustand store đã được định hình để đảm đương cá
 |                       | Windows Installer            | ❓ Chưa xác định   | Làm trước release     | 🔴      |
 |                       | macOS Build                  | ❓ Chưa xác định   | Làm sau               | 🟢      |
 |                       | Linux Build                  | ❓ Chưa xác định   | Làm sau               | 🟢      |
+
+## 9. Audit tiến độ ngày 2026-08-23
+
+Đã hoàn thành thêm:
+
+- `npm run build` chạy thành công.
+- Đã thêm `src/services/git.test.ts` với 4 unit test parser, tất cả đều pass.
+- Đã thêm Tags View và Remotes View; hiện hiển thị dữ liệu đọc từ repository.
+- Đã thêm discard file với xác nhận inline trong Changes View.
+
+Vẫn chưa hoàn thành:
+
+- Tags và Remotes chưa có thao tác create/edit/delete/push.
+- Chưa có stage hunk hoặc stage selected lines.
+- Git Graph vẫn cần layout theo topology parent hash thay vì author.
+- Merge conflict chưa có mark resolved, continue merge và mở editor.
+- Rebase hiện mới có khai báo type, chưa có implementation đầy đủ.
+- Chưa có test store, IPC và E2E.
+- Error handling vẫn trả về boolean ở nhiều action và chưa hiển thị đầy đủ stderr/exit code.
