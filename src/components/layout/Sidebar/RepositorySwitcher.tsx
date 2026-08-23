@@ -12,7 +12,7 @@ export function RepositorySwitcher() {
       </div>
       <div className={styles.repoInfo}>
         <div className={styles.repoName}>{name}</div>
-        <div className={styles.repoPath} title={path}>{path}</div>
+        <div className={styles.repoPath} title={path || undefined}>{path}</div>
       </div>
       <div className={styles.repoSelector}>
         ↕
