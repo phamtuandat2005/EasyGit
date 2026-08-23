@@ -11,7 +11,7 @@ export interface ContextPanelState {
   data: unknown;
 }
 
-export type ModalType = 'new-branch' | 'clone' | 'merge' | 'rebase' | 'delete-branch' | 'discard' | 'settings' | 'none';
+export type ModalType = 'new-branch' | 'clone' | 'merge' | 'rebase' | 'delete-branch' | 'discard' | 'settings' | 'command-palette' | 'none';
 
 export interface ModalState {
   type: ModalType;

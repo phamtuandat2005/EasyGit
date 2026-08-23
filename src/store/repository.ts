@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { RepositoryState, GitChangedFile, GitCommit, GitBranch, GitStash, GitRemote, GitTag } from '../types/git';
-import { parseLog, parseStatus, parseBranches, parseStashes, parseRemotes, parseTags } from '../services/git';
-
+import { parseLog, parseStatus, parseBranches, parseStashes, parseRemotes, parseTags, parseDiff } from '../services/git';
+import type { GitFileDiff } from '../types/git';
 // ── Electron IPC bridge (undefined in browser) ─────────────────────────────
 const electronGit = (window as any).electron?.git;
 
@@ -14,23 +14,42 @@ interface RepositoryStore extends RepositoryState {
   setBranch: (branch: string) => void;
   createBranch: (name: string) => Promise<boolean>;
   checkout: (branch: string) => Promise<boolean>;
+  deleteBranch: (name: string, force?: boolean) => Promise<boolean>;
+  renameBranch: (oldName: string, newName: string) => Promise<boolean>;
 
   stageFile: (filePath: string) => Promise<void>;
   unstageFile: (filePath: string) => Promise<void>;
   stageAll: () => Promise<void>;
   unstageAll: () => Promise<void>;
+  discardFile: (filePath: string) => Promise<boolean>;
   commitChanges: (message: string) => Promise<boolean>;
   push: () => Promise<boolean>;
   pull: () => Promise<boolean>;
   fetch: () => Promise<boolean>;
   stash: () => Promise<boolean>;
+  stashPop: (index?: number) => Promise<boolean>;
+  stashApply: (index?: number) => Promise<boolean>;
+  stashDrop: (index: number) => Promise<boolean>;
   undoCommit: () => Promise<boolean>;
+
+  // Merge
+  mergeBranch: (branch: string, noFF?: boolean) => Promise<{ success: boolean; hasConflict?: boolean; error?: string }>;
+  abortMerge: () => Promise<boolean>;
+  resolveConflict: (filePath: string, resolution: 'ours' | 'theirs') => Promise<boolean>;
+  isMerging: boolean;
+  conflictedFiles: string[];
+
+  // Advanced
+  resetTo: (mode: 'soft' | 'mixed' | 'hard', target?: string) => Promise<boolean>;
+  revertCommit: (commitHash: string) => Promise<boolean>;
 
   selectCommit: (hash: string | null) => void;
   selectedCommitHash: string | null;
 
   selectFile: (path: string | null) => void;
   selectedFile: string | null;
+
+  getFileDiff: (filePath: string, staged?: boolean) => Promise<GitFileDiff | null>;
 
   isLoadingRepo: boolean;
   repoError: string | null;
@@ -58,6 +77,8 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   selectedFile: null,
   isLoadingRepo: false,
   repoError: null,
+  isMerging: false,
+  conflictedFiles: [],
 
   // ── loadRepository — open and parse a real git repo ──────────────────────────
   loadRepository: async (repoPath: string) => {
@@ -176,6 +197,78 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     return false;
   },
 
+  deleteBranch: async (name: string, force = false) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.deleteBranch(path, name, force);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  renameBranch: async (oldName: string, newName: string) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.renameBranch(path, oldName, newName);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  // ── Merge ────────────────────────────────────────────────────────────────────
+  mergeBranch: async (branch: string, noFF = false) => {
+    const { path } = get();
+    if (!path || !electronGit) return { success: false, error: 'No repository open' };
+    const result = await electronGit.merge(path, branch, noFF);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return { success: true };
+    }
+    // Handle conflict case
+    if (result?.hasConflict) {
+      const mergeStatusResult = await electronGit.mergeStatus(path);
+      const conflictedFiles: string[] = mergeStatusResult?.conflictedFiles ?? [];
+      set({ isMerging: true, conflictedFiles, status: 'conflict' });
+      await get().refreshStatus();
+    }
+    return { success: false, hasConflict: result?.hasConflict, error: result?.error };
+  },
+
+  abortMerge: async () => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.abortMerge(path);
+    if (result?.success) {
+      set({ isMerging: false, conflictedFiles: [] });
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  resolveConflict: async (filePath: string, resolution: 'ours' | 'theirs') => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.resolveConflict(path, filePath, resolution);
+    if (result?.success) {
+      // Remove file from conflicted list
+      set(s => ({ conflictedFiles: s.conflictedFiles.filter(f => f !== filePath) }));
+      // Check if all conflicts resolved
+      const mergeStatusResult = await electronGit.mergeStatus(path);
+      const remaining: string[] = mergeStatusResult?.conflictedFiles ?? [];
+      if (remaining.length === 0) {
+        set({ isMerging: false, conflictedFiles: [] });
+      }
+      await get().refreshStatus();
+      return true;
+    }
+    return false;
+  },
+
   // ── Stage / Unstage ──────────────────────────────────────────────────────────
   stageFile: async (filePath: string) => {
     const { path } = get();
@@ -242,6 +335,18 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     }
   },
 
+  // ── Discard File ─────────────────────────────────────────────────────────────
+  discardFile: async (filePath: string) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.discardFile(path, filePath);
+    if (result?.success) {
+      await get().refreshStatus();
+      return true;
+    }
+    return false;
+  },
+
   // ── Commit ────────────────────────────────────────────────────────────────────
   commitChanges: async (message: string) => {
     const { path } = get();
@@ -293,8 +398,39 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     if (!path || !electronGit) return false;
     const result = await electronGit.stash(path);
     if (result?.success) {
-      await get().refreshStatus();
-      // Wait, we need to refresh stashes too. The easiest is loadRepository or just fetch stashes.
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  stashPop: async (index?: number) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.stashPop(path, index);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  stashApply: async (index?: number) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.stashApply(path, index);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  stashDrop: async (index: number) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.stashDrop(path, index);
+    if (result?.success) {
       await get().loadRepository(path);
       return true;
     }
@@ -312,7 +448,40 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     return false;
   },
 
+  // ── Advanced Git ──────────────────────────────────────────────────────────────
+  resetTo: async (mode: 'soft' | 'mixed' | 'hard', target = 'HEAD') => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.reset(path, mode, target);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
+  revertCommit: async (commitHash: string) => {
+    const { path } = get();
+    if (!path || !electronGit) return false;
+    const result = await electronGit.revert(path, commitHash);
+    if (result?.success) {
+      await get().loadRepository(path);
+      return true;
+    }
+    return false;
+  },
+
   // ── Select ────────────────────────────────────────────────────────────────────
   selectCommit: (hash) => set({ selectedCommitHash: hash }),
   selectFile: (path) => set({ selectedFile: path }),
+
+  getFileDiff: async (filePath: string, staged = false) => {
+    const { path } = get();
+    if (!path || !electronGit) return null;
+    const result = await electronGit.diff(path, filePath, staged);
+    if (result?.success) {
+      return parseDiff(result.output, filePath);
+    }
+    return null;
+  },
 }));

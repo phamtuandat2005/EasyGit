@@ -132,3 +132,34 @@
 .branchRow:hover .branchActions {
   opacity: 1;
 }
+
+/* Inline rename */
+.renameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.renameInput {
+  background: var(--bg-app, #181825);
+  border: 1px solid var(--accent, #cba6f7);
+  border-radius: 4px;
+  color: var(--text-primary, #cdd6f4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  padding: 3px 7px;
+  flex: 1;
+  outline: none;
+}
+
+/* Delete confirmation inline */
+.deleteConfirm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: rgba(243, 139, 168, 0.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+}

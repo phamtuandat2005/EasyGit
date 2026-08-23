@@ -389,4 +389,120 @@ app.whenReady().then(() => {
       return { success: true };
     } catch (e: any) { return { success: false, error: e.message }; }
   });
+
+  // ── git:merge ────────────────────────────────────────────────────────────────
+  ipcMain.handle('git:merge', async (_, repoPath: string, branch: string, noFF = false) => {
+    try {
+      const args = noFF ? ['merge', '--no-ff', branch] : ['merge', branch];
+      const output = await git(repoPath, args);
+      return { success: true, output };
+    } catch (e: any) {
+      // Check if it's a conflict error
+      const isConflict = e.message.includes('CONFLICT') || e.message.includes('Automatic merge failed');
+      return { success: false, error: e.message, hasConflict: isConflict };
+    }
+  });
+
+  ipcMain.handle('git:abortMerge', async (_, repoPath: string) => {
+    try {
+      await git(repoPath, ['merge', '--abort']);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('git:mergeStatus', async (_, repoPath: string) => {
+    try {
+      // Check if MERGE_HEAD exists → means we are in a merge conflict state
+      const { existsSync } = await import('fs');
+      const isMerging = existsSync(`${repoPath}/.git/MERGE_HEAD`);
+      // Get conflicted files from git status (UU, AA, DD prefixes)
+      const statusOutput = await git(repoPath, ['status', '--porcelain=v1']);
+      const conflictedFiles = statusOutput
+        .split('\n')
+        .filter(l => l.match(/^(UU|AA|DD|AU|UA|DU|UD)/))
+        .map(l => l.slice(3).trim());
+      return { success: true, isMerging, conflictedFiles };
+    } catch (e: any) { return { success: false, error: e.message, isMerging: false, conflictedFiles: [] }; }
+  });
+
+  // Resolve conflict by choosing one side (ours or theirs)
+  ipcMain.handle('git:resolveConflict', async (_, repoPath: string, filePath: string, resolution: 'ours' | 'theirs') => {
+    try {
+      await git(repoPath, ['checkout', `--${resolution}`, '--', filePath]);
+      await git(repoPath, ['add', '--', filePath]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:deleteBranch ─────────────────────────────────────────────────────────
+  ipcMain.handle('git:deleteBranch', async (_, repoPath: string, name: string, force = false) => {
+    try {
+      await git(repoPath, ['branch', force ? '-D' : '-d', name]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('git:renameBranch', async (_, repoPath: string, oldName: string, newName: string) => {
+    try {
+      await git(repoPath, ['branch', '-m', oldName, newName]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:discardFile ──────────────────────────────────────────────────────────
+  ipcMain.handle('git:discardFile', async (_, repoPath: string, filePath: string) => {
+    try {
+      // checkout -- will restore tracked file; for untracked files we need to remove them
+      try {
+        await git(repoPath, ['checkout', 'HEAD', '--', filePath]);
+      } catch {
+        // If it was untracked, checkout won't work; we try to remove it cleanly
+        await git(repoPath, ['clean', '-f', '--', filePath]);
+      }
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:stashPop / stashApply / stashDrop ────────────────────────────────────
+  ipcMain.handle('git:stashPop', async (_, repoPath: string, index?: number) => {
+    try {
+      const ref = index !== undefined ? `stash@{${index}}` : undefined;
+      const args = ref ? ['stash', 'pop', ref] : ['stash', 'pop'];
+      await git(repoPath, args);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('git:stashApply', async (_, repoPath: string, index?: number) => {
+    try {
+      const ref = index !== undefined ? `stash@{${index}}` : undefined;
+      const args = ref ? ['stash', 'apply', ref] : ['stash', 'apply'];
+      await git(repoPath, args);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  ipcMain.handle('git:stashDrop', async (_, repoPath: string, index: number) => {
+    try {
+      await git(repoPath, ['stash', 'drop', `stash@{${index}}`]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:reset ────────────────────────────────────────────────────────────────
+  ipcMain.handle('git:reset', async (_, repoPath: string, mode: 'soft' | 'mixed' | 'hard', target = 'HEAD') => {
+    try {
+      await git(repoPath, ['reset', `--${mode}`, target]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
+
+  // ── git:revert ───────────────────────────────────────────────────────────────
+  ipcMain.handle('git:revert', async (_, repoPath: string, commitHash: string) => {
+    try {
+      // --no-edit: don't open editor for commit message
+      await git(repoPath, ['revert', '--no-edit', commitHash]);
+      return { success: true };
+    } catch (e: any) { return { success: false, error: e.message }; }
+  });
 });

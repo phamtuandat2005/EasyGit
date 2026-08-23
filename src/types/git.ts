@@ -2,7 +2,7 @@
    Git Entity Types
    ============================================ */
 
-export type GitFileStatus = 'modified' | 'added' | 'deleted' | 'renamed' | 'conflict' | 'untracked';
+export type GitFileStatus = 'modified' | 'added' | 'deleted' | 'renamed' | 'conflict' | 'untracked' | 'copied' | 'ignored';
 
 
 

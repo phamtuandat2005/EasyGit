@@ -29,7 +29,20 @@ electron.contextBridge.exposeInMainWorld("electron", {
     init: (path) => electron.ipcRenderer.invoke("git:init", path),
     clone: (url, destination) => electron.ipcRenderer.invoke("git:clone", url, destination),
     stash: (path) => electron.ipcRenderer.invoke("git:stash", path),
-    undoCommit: (path) => electron.ipcRenderer.invoke("git:undoCommit", path)
+    undoCommit: (path) => electron.ipcRenderer.invoke("git:undoCommit", path),
+    // ── New actions ──
+    merge: (path, branch, noFF) => electron.ipcRenderer.invoke("git:merge", path, branch, noFF),
+    abortMerge: (path) => electron.ipcRenderer.invoke("git:abortMerge", path),
+    mergeStatus: (path) => electron.ipcRenderer.invoke("git:mergeStatus", path),
+    resolveConflict: (path, file, resolution) => electron.ipcRenderer.invoke("git:resolveConflict", path, file, resolution),
+    deleteBranch: (path, name, force) => electron.ipcRenderer.invoke("git:deleteBranch", path, name, force),
+    renameBranch: (path, oldName, newName) => electron.ipcRenderer.invoke("git:renameBranch", path, oldName, newName),
+    discardFile: (path, filePath) => electron.ipcRenderer.invoke("git:discardFile", path, filePath),
+    stashPop: (path, index) => electron.ipcRenderer.invoke("git:stashPop", path, index),
+    stashApply: (path, index) => electron.ipcRenderer.invoke("git:stashApply", path, index),
+    stashDrop: (path, index) => electron.ipcRenderer.invoke("git:stashDrop", path, index),
+    reset: (path, mode, target) => electron.ipcRenderer.invoke("git:reset", path, mode, target),
+    revert: (path, commitHash) => electron.ipcRenderer.invoke("git:revert", path, commitHash)
   },
   // Menu → Renderer listeners
   onMenuAction: (cb) => {

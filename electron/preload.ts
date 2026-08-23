@@ -32,6 +32,19 @@ contextBridge.exposeInMainWorld('electron', {
     clone:         (url: string, destination: string)          => ipcRenderer.invoke('git:clone', url, destination),
     stash:         (path: string)                              => ipcRenderer.invoke('git:stash', path),
     undoCommit:    (path: string)                              => ipcRenderer.invoke('git:undoCommit', path),
+    // ── New actions ──
+    merge:          (path: string, branch: string, noFF?: boolean) => ipcRenderer.invoke('git:merge', path, branch, noFF),
+    abortMerge:     (path: string)                              => ipcRenderer.invoke('git:abortMerge', path),
+    mergeStatus:    (path: string)                              => ipcRenderer.invoke('git:mergeStatus', path),
+    resolveConflict:(path: string, file: string, resolution: 'ours' | 'theirs') => ipcRenderer.invoke('git:resolveConflict', path, file, resolution),
+    deleteBranch:   (path: string, name: string, force?: boolean) => ipcRenderer.invoke('git:deleteBranch', path, name, force),
+    renameBranch:   (path: string, oldName: string, newName: string) => ipcRenderer.invoke('git:renameBranch', path, oldName, newName),
+    discardFile:    (path: string, filePath: string)            => ipcRenderer.invoke('git:discardFile', path, filePath),
+    stashPop:       (path: string, index?: number)              => ipcRenderer.invoke('git:stashPop', path, index),
+    stashApply:     (path: string, index?: number)              => ipcRenderer.invoke('git:stashApply', path, index),
+    stashDrop:      (path: string, index: number)               => ipcRenderer.invoke('git:stashDrop', path, index),
+    reset:          (path: string, mode: 'soft' | 'mixed' | 'hard', target?: string) => ipcRenderer.invoke('git:reset', path, mode, target),
+    revert:         (path: string, commitHash: string)          => ipcRenderer.invoke('git:revert', path, commitHash),
   },
 
   // Menu → Renderer listeners

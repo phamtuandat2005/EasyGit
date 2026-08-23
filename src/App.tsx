@@ -9,6 +9,7 @@ import { ContextPanel } from './components/layout/ContextPanel/ContextPanel';
 import { CommandPalette } from './components/ui/CommandPalette';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { NewBranchModal } from './components/ui/NewBranchModal';
+import { MergeModal } from './components/ui/MergeModal';
 import ChangesView from './views/ChangesView';
 import HistoryView from './views/HistoryView';
 import BranchesView from './views/BranchesView';
@@ -44,8 +45,13 @@ export function App() {
     registerCommand({ id: 'git:fetch', label: 'Fetch', category: 'Git', action: () => useRepositoryStore.getState().fetch() });
     registerCommand({ id: 'git:pull', label: 'Pull', category: 'Git', action: () => useRepositoryStore.getState().pull() });
     registerCommand({ id: 'git:push', label: 'Push', category: 'Git', action: () => useRepositoryStore.getState().push() });
-    registerCommand({ id: 'git:stash', label: 'Stash', category: 'Git', action: () => useRepositoryStore.getState().stash() });
+    registerCommand({ id: 'git:stash', label: 'Stash All Changes', category: 'Git', action: () => useRepositoryStore.getState().stash() });
+    registerCommand({ id: 'git:stashPop', label: 'Stash Pop', category: 'Git', action: () => useRepositoryStore.getState().stashPop() });
     registerCommand({ id: 'git:undo', label: 'Undo Last Commit', category: 'Git', action: () => useRepositoryStore.getState().undoCommit() });
+    registerCommand({ id: 'git:merge', label: 'Merge Branch...', category: 'Git', action: () => openModal({ type: 'merge' }) });
+    registerCommand({ id: 'git:resetSoft', label: 'Reset Soft (HEAD~1)', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('soft', 'HEAD~1') });
+    registerCommand({ id: 'git:resetMixed', label: 'Reset Mixed (HEAD~1)', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('mixed', 'HEAD~1') });
+    registerCommand({ id: 'git:resetHard', label: 'Reset Hard (HEAD~1) ⚠️', category: 'Git (Advanced)', action: () => useRepositoryStore.getState().resetTo('hard', 'HEAD~1') });
   }, []);
 
   // Listen to native menu bar actions from Electron main process
@@ -116,6 +122,7 @@ export function App() {
       <CommandPalette />
       <SettingsModal isOpen={modal.type === 'settings'} onClose={closeModal} />
       <NewBranchModal isOpen={modal.type === 'new-branch'} onClose={closeModal} />
+      <MergeModal isOpen={modal.type === 'merge'} onClose={closeModal} />
     </>
   );
 }

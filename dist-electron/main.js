@@ -1,4 +1,26 @@
 "use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 const electron = require("electron");
 const path = require("path");
 const child_process = require("child_process");
@@ -359,6 +381,116 @@ electron.app.whenReady().then(() => {
   electron.ipcMain.handle("git:undoCommit", async (_, repoPath) => {
     try {
       await git(repoPath, ["reset", "HEAD~1"]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:merge", async (_, repoPath, branch, noFF = false) => {
+    try {
+      const args = noFF ? ["merge", "--no-ff", branch] : ["merge", branch];
+      const output = await git(repoPath, args);
+      return { success: true, output };
+    } catch (e) {
+      const isConflict = e.message.includes("CONFLICT") || e.message.includes("Automatic merge failed");
+      return { success: false, error: e.message, hasConflict: isConflict };
+    }
+  });
+  electron.ipcMain.handle("git:abortMerge", async (_, repoPath) => {
+    try {
+      await git(repoPath, ["merge", "--abort"]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:mergeStatus", async (_, repoPath) => {
+    try {
+      const { existsSync } = await import("fs");
+      const isMerging = existsSync(`${repoPath}/.git/MERGE_HEAD`);
+      const statusOutput = await git(repoPath, ["status", "--porcelain=v1"]);
+      const conflictedFiles = statusOutput.split("\n").filter((l) => l.match(/^(UU|AA|DD|AU|UA|DU|UD)/)).map((l) => l.slice(3).trim());
+      return { success: true, isMerging, conflictedFiles };
+    } catch (e) {
+      return { success: false, error: e.message, isMerging: false, conflictedFiles: [] };
+    }
+  });
+  electron.ipcMain.handle("git:resolveConflict", async (_, repoPath, filePath, resolution) => {
+    try {
+      await git(repoPath, ["checkout", `--${resolution}`, "--", filePath]);
+      await git(repoPath, ["add", "--", filePath]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:deleteBranch", async (_, repoPath, name, force = false) => {
+    try {
+      await git(repoPath, ["branch", force ? "-D" : "-d", name]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:renameBranch", async (_, repoPath, oldName, newName) => {
+    try {
+      await git(repoPath, ["branch", "-m", oldName, newName]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:discardFile", async (_, repoPath, filePath) => {
+    try {
+      try {
+        await git(repoPath, ["checkout", "HEAD", "--", filePath]);
+      } catch {
+        await git(repoPath, ["clean", "-f", "--", filePath]);
+      }
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:stashPop", async (_, repoPath, index) => {
+    try {
+      const ref = index !== void 0 ? `stash@{${index}}` : void 0;
+      const args = ref ? ["stash", "pop", ref] : ["stash", "pop"];
+      await git(repoPath, args);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:stashApply", async (_, repoPath, index) => {
+    try {
+      const ref = index !== void 0 ? `stash@{${index}}` : void 0;
+      const args = ref ? ["stash", "apply", ref] : ["stash", "apply"];
+      await git(repoPath, args);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:stashDrop", async (_, repoPath, index) => {
+    try {
+      await git(repoPath, ["stash", "drop", `stash@{${index}}`]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:reset", async (_, repoPath, mode, target = "HEAD") => {
+    try {
+      await git(repoPath, ["reset", `--${mode}`, target]);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:revert", async (_, repoPath, commitHash) => {
+    try {
+      await git(repoPath, ["revert", "--no-edit", commitHash]);
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

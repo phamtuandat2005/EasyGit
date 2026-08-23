@@ -189,3 +189,66 @@ export function parseTags(output: string): GitTag[] {
     };
   });
 }
+
+// ── Diff ──────────────────────────────────────────────────────────────────────
+export function parseDiff(output: string, filePath: string): import('../types/git').GitFileDiff {
+  const lines = output.split('\n');
+  const hunks: import('../types/git').GitDiffHunk[] = [];
+  let additions = 0;
+  let deletions = 0;
+  let currentHunk: import('../types/git').GitDiffHunk | null = null;
+  let oldLineNum = 0;
+  let newLineNum = 0;
+  let isBinary = false;
+
+  for (const line of lines) {
+    if (line.startsWith('Binary files')) {
+      isBinary = true;
+      continue;
+    }
+    if (line.startsWith('diff --git')) continue;
+    if (line.startsWith('index ')) continue;
+    if (line.startsWith('--- ')) continue;
+    if (line.startsWith('+++ ')) continue;
+    
+    if (line.startsWith('@@ ')) {
+      const match = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+      if (match) {
+        currentHunk = {
+          oldStart: parseInt(match[1]),
+          oldLines: match[2] ? parseInt(match[2]) : 1,
+          newStart: parseInt(match[3]),
+          newLines: match[4] ? parseInt(match[4]) : 1,
+          header: line,
+          lines: []
+        };
+        hunks.push(currentHunk);
+        oldLineNum = currentHunk.oldStart;
+        newLineNum = currentHunk.newStart;
+      }
+      continue;
+    }
+    
+    if (currentHunk) {
+      if (line.startsWith('+')) {
+        currentHunk.lines.push({ type: 'add', content: line.substring(1), newLineNumber: newLineNum++ });
+        additions++;
+      } else if (line.startsWith('-')) {
+        currentHunk.lines.push({ type: 'delete', content: line.substring(1), oldLineNumber: oldLineNum++ });
+        deletions++;
+      } else if (line.startsWith(' ')) {
+        currentHunk.lines.push({ type: 'context', content: line.substring(1), oldLineNumber: oldLineNum++, newLineNumber: newLineNum++ });
+      }
+    }
+  }
+
+  return {
+    oldPath: filePath,
+    newPath: filePath,
+    status: 'modified',
+    hunks,
+    isBinary,
+    additions,
+    deletions
+  };
+}
