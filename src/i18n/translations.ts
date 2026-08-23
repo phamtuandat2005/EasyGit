@@ -36,6 +36,7 @@ export interface Translations {
   commitDescPlaceholder: string;
   fileDetails: string;
   btnClosePanel: string;
+  removedFromGitKeepLocalHint: string;
 
   // Tabs
   tabGeneral: string;
@@ -272,6 +273,7 @@ const en: Translations = {
   commitMsgPlaceholder: 'Commit message (required)', commitDescPlaceholder: 'Description (optional)',
   btnCommit: 'Commit', btnCommitPush: 'Commit & Push',
   fileDetails: 'File Details', btnClosePanel: 'Close panel',
+  removedFromGitKeepLocalHint: 'Removed from Git index. Next: commit your change, then push to update GitHub while keeping the local file.',
 
   tabGeneral: 'General', tabAppearance: 'Appearance', tabGit: 'Git',
   tabDiff: 'Diff & Merge', tabCommit: 'Commit', tabNotifications: 'Notifications',
@@ -403,6 +405,7 @@ const vi: Translations = {
   commitMsgPlaceholder: 'Thông điệp commit (bắt buộc)', commitDescPlaceholder: 'Mô tả (tùy chọn)',
   btnCommit: 'Commit', btnCommitPush: 'Commit & Push',
   fileDetails: 'Chi tiết tệp', btnClosePanel: 'Đóng bảng',
+  removedFromGitKeepLocalHint: 'Đã gỡ khỏi Git index. Bước tiếp theo: commit thay đổi, rồi push để cập nhật GitHub trong khi vẫn giữ file local.',
 
   tabGeneral: 'Chung', tabAppearance: 'Giao diện', tabGit: 'Git',
   tabDiff: 'Diff & Merge', tabCommit: 'Commit', tabNotifications: 'Thông báo',
@@ -534,6 +537,7 @@ const ja: Translations = {
   commitMsgPlaceholder: 'コミットメッセージ（必須）', commitDescPlaceholder: '説明（任意）',
   btnCommit: 'コミット', btnCommitPush: 'コミット＆プッシュ',
   fileDetails: 'ファイルの詳細', btnClosePanel: 'パネルを閉じる',
+  removedFromGitKeepLocalHint: 'Git index から削除しました。次に commit してから push すると、ローカルファイルを残したまま GitHub を更新できます。',
 
   tabGeneral: '一般', tabAppearance: '外観', tabGit: 'Git',
   tabDiff: 'Diff・マージ', tabCommit: 'コミット', tabNotifications: '通知',
@@ -665,6 +669,7 @@ const ko: Translations = {
   commitMsgPlaceholder: '커밋 메시지 (필수)', commitDescPlaceholder: '설명 (선택 사항)',
   btnCommit: '커밋', btnCommitPush: '커밋 및 푸시',
   fileDetails: '파일 세부 정보', btnClosePanel: '패널 닫기',
+  removedFromGitKeepLocalHint: 'Git 인덱스에서 제거했습니다. 다음 단계는 commit 한 뒤 push 해서 로컬 파일은 유지한 채 GitHub를 업데이트하는 것입니다.',
 
   tabGeneral: '일반', tabAppearance: '모양', tabGit: 'Git',
   tabDiff: 'Diff·병합', tabCommit: '커밋', tabNotifications: '알림',
@@ -796,6 +801,7 @@ const zh: Translations = {
   commitMsgPlaceholder: '提交消息 (必填)', commitDescPlaceholder: '描述 (可选)',
   btnCommit: '提交', btnCommitPush: '提交并推送',
   fileDetails: '文件详情', btnClosePanel: '关闭面板',
+  removedFromGitKeepLocalHint: '已从 Git 索引中移除。下一步请先 commit，再 push，这样就能更新 GitHub，同时保留本地文件。',
 
   tabGeneral: '通用', tabAppearance: '外观', tabGit: 'Git',
   tabDiff: 'Diff·合并', tabCommit: '提交', tabNotifications: '通知',

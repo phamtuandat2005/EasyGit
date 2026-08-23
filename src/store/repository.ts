@@ -3,6 +3,8 @@ import type { RepositoryState, GitChangedFile, GitCommit, GitBranch, GitStash, G
 import { parseLog, parseStatus, parseBranches, parseStashes, parseRemotes, parseTags, parseDiff } from '../services/git';
 import type { GitFileDiff } from '../types/git';
 import { useUIStore } from './ui';
+import { TRANSLATIONS } from '../i18n/translations';
+import { useSettingsStore } from './settings';
 // ── Electron IPC bridge (undefined in browser) ─────────────────────────────
 const electronGit = (window as any).electron?.git;
 const hasGitMethod = (name: string) => typeof electronGit?.[name] === 'function';
@@ -422,6 +424,15 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
         return false;
       }
       useUIStore.getState().finishGitOperation(opId, { success: true, stdout: gitText(result) });
+      if (options?.keepLocal) {
+        const lang = useSettingsStore.getState().settings.general.language;
+        const t = TRANSLATIONS[lang] || TRANSLATIONS['English'];
+        useUIStore.getState().addToast({
+          type: 'info',
+          title: t.removedFromGitKeepLocalHint,
+          message: uniqueFiles.join(', '),
+        });
+      }
     }
 
     if (deleteOnFs.length > 0) {

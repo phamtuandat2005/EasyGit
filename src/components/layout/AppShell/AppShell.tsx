@@ -14,6 +14,7 @@ interface AppShellProps {
 export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }: AppShellProps) {
   const selectedFile = useRepositoryStore(s => s.selectedFile);
   const sidebarCollapsed = useUIStore(s => s.sidebarCollapsed);
+  const { toasts, removeToast } = useUIStore();
   const isPanelOpen = !!selectedFile && !!contextPanel;
 
   const [panelWidth, setPanelWidth] = React.useState(500);
@@ -44,6 +45,18 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
 
   return (
     <div className={styles.container}>
+      <div className={styles.toastViewport}>
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`${styles.toast} ${styles[`toast_${toast.type}`]}`}
+            onClick={() => removeToast(toast.id)}
+          >
+            <div className={styles.toastTitle}>{toast.title}</div>
+            {toast.message && <div className={styles.toastMessage}>{toast.message}</div>}
+          </div>
+        ))}
+      </div>
       <div className={sidebarCollapsed ? styles.sidebarHidden : styles.sidebar}>
         {sidebar}
       </div>
