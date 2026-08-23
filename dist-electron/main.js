@@ -381,10 +381,10 @@ electron.app.whenReady().then(() => {
       return { success: false, error: e.message };
     }
   });
-  electron.ipcMain.handle("fs:deletePath", async (_, paths) => {
+  electron.ipcMain.handle("fs:deletePath", async (_, repoPath, paths) => {
     try {
       const uniquePaths = Array.from(new Set((paths ?? []).filter(Boolean)));
-      await Promise.all(uniquePaths.map((p) => promises.rm(p, { recursive: true, force: true })));
+      await Promise.all(uniquePaths.map((p) => promises.rm(path.join(repoPath, p), { recursive: true, force: true })));
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

@@ -95,7 +95,9 @@ export default function ChangesView() {
           {(menu.file.status === 'deleted' || menu.file.staged) && (
             <button type="button" className={styles.contextItem} onClick={async () => { await restoreFiles([menu.file.path]); setMenu(null); }}>Restore</button>
           )}
-          <button type="button" className={styles.contextItem} onClick={async () => { await deleteFiles([menu.file.path], { keepLocal: true }); setMenu(null); }}>Remove from Git, keep local</button>
+          {(menu.file.status === 'untracked' || menu.file.status === 'ignored')
+            ? <button type="button" className={styles.contextItem} onClick={() => setMenu(null)}>File is not tracked by Git</button>
+            : <button type="button" className={styles.contextItem} onClick={async () => { await deleteFiles([menu.file.path], { keepLocal: true }); setMenu(null); }}>Remove from Git, keep local</button>}
           <button type="button" className={styles.contextItemDanger} onClick={async () => { await deleteFiles([menu.file.path]); setMenu(null); }}>Delete file</button>
         </div>
       )}

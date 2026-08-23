@@ -163,7 +163,7 @@ function ExplorerTree({ nodes, selectedFile, onSelectFile, onContextMenu, depth 
     <>
       {nodes.map((node) => {
         if (node.kind === 'folder') {
-          const isOpen = openFolders[node.path] ?? depth < 1;
+          const isOpen = openFolders[node.path] ?? false;
           return (
             <div key={node.path}>
               <div
@@ -222,6 +222,8 @@ export function Sidebar() {
   const explorerTree = useMemo(() => buildExplorerTree(allFiles), [allFiles]);
 
   const totalChanges = stagedChanges.length + unstagedChanges.length;
+  const selectedChangeFile = [...stagedChanges, ...unstagedChanges].find((file) => file.path === menu?.file) ?? null;
+  const isTrackedFile = selectedChangeFile ? selectedChangeFile.status !== 'untracked' && selectedChangeFile.status !== 'ignored' : true;
 
   return (
     <div className={styles.sidebar}>
@@ -269,7 +271,11 @@ export function Sidebar() {
       {menu && createPortal(
         <div className={styles.contextMenu} style={{ left: menu.x, top: menu.y }} onClick={(e) => e.stopPropagation()}>
           <button type="button" className={styles.contextItem} onClick={async () => { selectFile(menu.file); setMenu(null); }}>Open</button>
-          <button type="button" className={styles.contextItem} onClick={async () => { await deleteFiles([menu.file], { keepLocal: true }); setMenu(null); }}>Remove from Git, keep local</button>
+          {isTrackedFile ? (
+            <button type="button" className={styles.contextItem} onClick={async () => { await deleteFiles([menu.file], { keepLocal: true }); setMenu(null); }}>Remove from Git, keep local</button>
+          ) : (
+            <button type="button" className={styles.contextItem} onClick={async () => { setMenu(null); }}>File is not tracked by Git</button>
+          )}
           <button type="button" className={styles.contextItemDanger} onClick={async () => { await deleteFiles([menu.file]); setMenu(null); }}>Delete file</button>
         </div>,
         document.body

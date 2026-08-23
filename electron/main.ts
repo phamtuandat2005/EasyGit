@@ -393,10 +393,10 @@ app.whenReady().then(() => {
     } catch (e: any) { return { success: false, error: e.message }; }
   });
 
-  ipcMain.handle('fs:deletePath', async (_, paths: string[]) => {
+  ipcMain.handle('fs:deletePath', async (_, repoPath: string, paths: string[]) => {
     try {
       const uniquePaths = Array.from(new Set((paths ?? []).filter(Boolean)));
-      await Promise.all(uniquePaths.map((p) => rm(p, { recursive: true, force: true })));
+      await Promise.all(uniquePaths.map((p) => rm(join(repoPath, p), { recursive: true, force: true })));
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.message };

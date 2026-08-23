@@ -24,7 +24,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
     unstageAll: (path) => electron.ipcRenderer.invoke("git:unstageAll", path),
     remove: (path, files, options) => electron.ipcRenderer.invoke("git:remove", path, files, options),
     restore: (path, files) => electron.ipcRenderer.invoke("git:restore", path, files),
-    deletePath: (paths) => electron.ipcRenderer.invoke("fs:deletePath", paths),
+    deletePath: (path, paths) => electron.ipcRenderer.invoke("fs:deletePath", path, paths),
     commit: (path, message) => electron.ipcRenderer.invoke("git:commit", path, message),
     push: (path) => electron.ipcRenderer.invoke("git:push", path),
     pull: (path) => electron.ipcRenderer.invoke("git:pull", path),

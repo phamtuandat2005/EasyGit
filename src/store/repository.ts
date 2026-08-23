@@ -425,7 +425,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     }
 
     if (deleteOnFs.length > 0) {
-      const result = await electronGit.deletePath(deleteOnFs);
+      const result = await electronGit.deletePath(path, deleteOnFs);
       if (!result?.success) return false;
     }
 
