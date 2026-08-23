@@ -13,7 +13,10 @@ interface ChangedFileRowProps {
 export function ChangedFileRow({ file }: ChangedFileRowProps) {
   const { stageFile, unstageFile, discardFile, selectFile, selectedFile } = useRepositoryStore();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+<<<<<<< HEAD
   const t = useUiTranslation();
+=======
+>>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
 
   const handleToggleStage = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -67,16 +70,38 @@ export function ChangedFileRow({ file }: ChangedFileRowProps) {
                 setConfirmDiscard(false);
               }}
             >
+<<<<<<< HEAD
               {t('confirm')}
+=======
+              Confirm
+>>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); setConfirmDiscard(false); }}
             >
+<<<<<<< HEAD
               {t('cancel')}
             </Button>
           </>
+=======
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); setConfirmDiscard(true); }}
+            title="Discard changes. This cannot be undone."
+          >
+            Discard
+          </Button>
+        )}
+        {file.staged ? (
+          <Button variant="ghost" size="sm" onClick={() => unstageFile(file.path)} icon="−">Unstage</Button>
+>>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
         ) : (
           <Button
             variant="danger"

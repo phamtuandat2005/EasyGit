@@ -54,6 +54,10 @@ export function AppShell({ sidebar, toolbar, statusbar, contextPanel, children }
         <div className={styles.workspace}>
           <div className={styles.content}>
             <div className={styles.viewContent}>{children}</div>
+<<<<<<< HEAD
+=======
+            <GitOperationTerminal />
+>>>>>>> 675534764cce2d6380ec24f6ed2abb07df8fed57
           </div>
           {isPanelOpen && (
             <>
