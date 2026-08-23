@@ -5,6 +5,7 @@ import type { GitFileDiff } from '../types/git';
 import { useUIStore } from './ui';
 // ── Electron IPC bridge (undefined in browser) ─────────────────────────────
 const electronGit = (window as any).electron?.git;
+const hasGitMethod = (name: string) => typeof electronGit?.[name] === 'function';
 const gitText = (result: any) => result?.stdout ?? result?.output ?? result?.data ?? '';
 const gitErrText = (result: any) => result?.stderr ?? result?.error ?? '';
 
@@ -76,6 +77,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
   stashes: [],
   remotes: [],
   tags: [],
+  allFiles: [],
   isLoading: false,
   error: undefined,
   selectedCommitHash: null,
@@ -115,7 +117,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
       const name = repoPath.split(/[\\/]/).pop() ?? repoPath;
 
       // 2. Fetch all data in parallel
-      const [logRes, statusRes, branchRes, stashRes, remoteRes, tagRes, branchNameRes, syncRes] =
+      const [logRes, statusRes, branchRes, stashRes, remoteRes, tagRes, branchNameRes, syncRes, filesRes] =
         await Promise.all([
           electronGit?.log(repoPath, 300),
           electronGit?.status(repoPath),
@@ -125,6 +127,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
           electronGit?.tags(repoPath),
           electronGit?.currentBranch(repoPath),
           electronGit?.syncStatus(repoPath),
+          hasGitMethod('listFiles') ? electronGit.listFiles(repoPath) : Promise.resolve(null),
         ]);
 
       // 3. Parse everything
@@ -137,6 +140,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
       const currentBranch: string = branchNameRes?.success ? gitText(branchNameRes).trim() : '';
       const ahead: number = syncRes?.success ? syncRes.ahead : 0;
       const behind: number = syncRes?.success ? syncRes.behind : 0;
+      const allFiles = filesRes?.success ? gitText(filesRes).split('\n').filter(Boolean) : [];
 
       const localBranches = allBranches.filter(b => !b.isRemote);
       const remoteBranches = allBranches.filter(b => b.isRemote);
@@ -156,6 +160,7 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
         stashes,
         remotes,
         tags,
+        allFiles,
         isLoadingRepo: false,
         repoError: null,
       });
@@ -182,8 +187,10 @@ export const useRepositoryStore = create<RepositoryStore>((set, get) => ({
     const commits = logRes?.success ? parseLog(gitText(logRes)) : get().commits;
     const ahead = syncRes?.success ? syncRes.ahead : get().ahead;
     const behind = syncRes?.success ? syncRes.behind : get().behind;
+    const filesRes = hasGitMethod('listFiles') ? await electronGit.listFiles(path) : null;
+    const allFiles = filesRes?.success ? gitText(filesRes).split('\n').filter(Boolean) : get().allFiles;
 
-    set({ stagedChanges: staged, unstagedChanges: unstaged, commits, ahead, behind,
+    set({ stagedChanges: staged, unstagedChanges: unstaged, commits, ahead, behind, allFiles,
           status: (staged.length + unstaged.length) > 0 ? 'modified' : 'clean' });
   },
 

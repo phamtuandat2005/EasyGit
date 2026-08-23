@@ -3,15 +3,17 @@ import { useRepositoryStore, useSettingsStore } from '../../../store';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { DiffViewer } from '../../git/DiffViewer';
 import type { GitFileDiff } from '../../../types/git';
+import { Button } from '../../ui/Button';
 import styles from './ContextPanel.module.css';
 
 export function ContextPanel() {
-  const { selectedFile, selectFile, getFileDiff, stagedChanges, commits, selectedCommitHash } = useRepositoryStore();
+  const { selectedFile, selectFile, getFileDiff, stagedChanges, commits, selectedCommitHash, deleteFiles } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
   const [diff, setDiff] = useState<GitFileDiff | null>(null);
   const [loading, setLoading] = useState(false);
   const selectedCommit = commits.find((commit) => commit.hash === selectedCommitHash) ?? null;
+  const isSelectedFileStaged = selectedFile ? stagedChanges.some(f => f.path === selectedFile) : false;
 
   useEffect(() => {
     if (!selectedFile) {
@@ -72,7 +74,33 @@ export function ContextPanel() {
         {loading ? (
           <div style={{ padding: '20px', color: 'var(--text-secondary)' }}>Loading diff...</div>
         ) : diff ? (
-          <DiffViewer diff={diff} />
+          <>
+            <DiffViewer diff={diff} />
+            <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  if (!selectedFile) return;
+                  await deleteFiles([selectedFile], { keepLocal: true });
+                }}
+              >
+                Remove from Git, keep local
+              </Button>
+              {isSelectedFileStaged && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    if (!selectedFile) return;
+                    await deleteFiles([selectedFile]);
+                  }}
+                >
+                  Delete file
+                </Button>
+              )}
+            </div>
+          </>
         ) : (
           <div style={{ padding: '20px', color: 'var(--text-secondary)' }}>No diff available.</div>
         )}

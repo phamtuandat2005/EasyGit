@@ -118,6 +118,7 @@ export interface RepositoryState {
   stashes: GitStash[];
   remotes: GitRemote[];
   tags: GitTag[];
+  allFiles: string[];
   isLoading: boolean;
   error?: string;
 }

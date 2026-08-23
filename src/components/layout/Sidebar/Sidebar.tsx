@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useUIStore, useRepositoryStore, useSettingsStore } from '../../../store';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import { useUiTranslation } from '../../../i18n/ui-translations';
@@ -102,13 +103,123 @@ const IconLayoutSidebar = () => (
   </svg>
 );
 
+type ExplorerNode =
+  | { kind: 'file'; name: string; path: string }
+  | { kind: 'folder'; name: string; path: string; children: ExplorerNode[] };
+
+function buildExplorerTree(paths: string[]): ExplorerNode[] {
+  const root: ExplorerNode[] = [];
+
+  const getOrCreateFolder = (children: ExplorerNode[], name: string, path: string) => {
+    const existing = children.find((node): node is Extract<ExplorerNode, { kind: 'folder' }> => node.kind === 'folder' && node.name === name);
+    if (existing) return existing;
+    const node: ExplorerNode = { kind: 'folder', name, path, children: [] };
+    children.push(node);
+    return node;
+  };
+
+  for (const fullPath of paths) {
+    const segments = fullPath.split(/[\\/]/).filter(Boolean);
+    if (segments.length === 0) continue;
+
+    let currentChildren = root;
+    let currentPath = '';
+
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+      const isLeaf = i === segments.length - 1;
+
+      if (isLeaf) {
+        if (!currentChildren.some((node) => node.kind === 'file' && node.path === fullPath)) {
+          currentChildren.push({ kind: 'file', name: segment, path: fullPath });
+        }
+      } else {
+        const folder = getOrCreateFolder(currentChildren, segment, currentPath);
+        currentChildren = folder.children;
+      }
+    }
+  }
+
+  const sortNodes = (nodes: ExplorerNode[]): ExplorerNode[] =>
+    [...nodes].sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === 'folder' ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    }).map((node) => node.kind === 'folder' ? { ...node, children: sortNodes(node.children) } : node);
+
+  return sortNodes(root);
+}
+
+function ExplorerTree({ nodes, selectedFile, onSelectFile, onContextMenu, depth = 0 }: {
+  nodes: ExplorerNode[];
+  selectedFile: string | null;
+  onSelectFile: (path: string) => void;
+  onContextMenu: (file: string, x: number, y: number) => void;
+  depth?: number;
+}) {
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
+
+  return (
+    <>
+      {nodes.map((node) => {
+        if (node.kind === 'folder') {
+          const isOpen = openFolders[node.path] ?? depth < 1;
+          return (
+            <div key={node.path}>
+              <div
+                className={styles.folderItem}
+                style={{ paddingLeft: 18 + depth * 14 }}
+                onClick={() => setOpenFolders((s) => ({ ...s, [node.path]: !isOpen }))}
+              >
+                <span className={`${styles.folderChevron} ${isOpen ? styles.folderChevronOpen : ''}`}>▶</span>
+                <span className={styles.folderIcon}>📁</span>
+                <span className={styles.folderName}>{node.name}</span>
+              </div>
+              {isOpen && node.children.length > 0 && (
+                <ExplorerTree
+                  nodes={node.children}
+                  selectedFile={selectedFile}
+                  onSelectFile={onSelectFile}
+                  onContextMenu={onContextMenu}
+                  depth={depth + 1}
+                />
+              )}
+            </div>
+          );
+        }
+
+        const active = selectedFile === node.path;
+        return (
+          <div
+            key={node.path}
+            className={`${styles.fileItem} ${active ? styles.fileItemActive : ''}`}
+            style={{ paddingLeft: 18 + depth * 14 }}
+            onClick={() => onSelectFile(node.path)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onContextMenu(node.path, e.clientX, e.clientY);
+            }}
+            title={node.path}
+          >
+            <span className={styles.fileIcon}>📄</span>
+            <span className={styles.fileItemName}>{node.name}</span>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 export function Sidebar() {
   const { activeView, setActiveView, openModal, toggleSidebar } = useUIStore();
-  const { stagedChanges, unstagedChanges, commits, branches, stashes } = useRepositoryStore();
+  const { stagedChanges, unstagedChanges, commits, branches, stashes, allFiles, selectFile, deleteFiles, selectedFile } = useRepositoryStore();
   const { settings } = useSettingsStore();
   const t = TRANSLATIONS[settings.general.language] || TRANSLATIONS['English'];
   const ui = useUiTranslation();
+  const [menu, setMenu] = useState<{ file: string; x: number; y: number } | null>(null);
+  const explorerTree = useMemo(() => buildExplorerTree(allFiles), [allFiles]);
 
   const totalChanges = stagedChanges.length + unstagedChanges.length;
 
@@ -136,7 +247,33 @@ export function Sidebar() {
           <NavItem icon={<IconTag    />} label={t.navTags}     active={activeView === 'tags'}                              onClick={() => setActiveView('tags')} />
           <NavItem icon={<IconRemote />} label={t.navRemotes}  active={activeView === 'remotes'}                          onClick={() => setActiveView('remotes')} />
         </Section>
+
+        <Section title="File Explorer" defaultExpanded>
+          <div className={styles.fileExplorerSection}>
+            <div className={styles.fileExplorerList}>
+            {explorerTree.length === 0 ? (
+              <div style={{ padding: '8px 18px', color: 'var(--text-tertiary)', fontSize: 12 }}>No files found.</div>
+            ) : (
+              <ExplorerTree
+                nodes={explorerTree}
+                selectedFile={selectedFile}
+                onSelectFile={selectFile}
+                onContextMenu={(file, x, y) => setMenu({ file, x, y })}
+              />
+            )}
+          </div>
+          </div>
+        </Section>
       </div>
+
+      {menu && createPortal(
+        <div className={styles.contextMenu} style={{ left: menu.x, top: menu.y }} onClick={(e) => e.stopPropagation()}>
+          <button type="button" className={styles.contextItem} onClick={async () => { selectFile(menu.file); setMenu(null); }}>Open</button>
+          <button type="button" className={styles.contextItem} onClick={async () => { await deleteFiles([menu.file], { keepLocal: true }); setMenu(null); }}>Remove from Git, keep local</button>
+          <button type="button" className={styles.contextItemDanger} onClick={async () => { await deleteFiles([menu.file]); setMenu(null); }}>Delete file</button>
+        </div>,
+        document.body
+      )}
 
       {/* Footer */}
       <div className={styles.footer}>

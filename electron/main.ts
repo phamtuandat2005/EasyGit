@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import { join } from 'path';
-import { rm } from 'fs/promises';
+import { rm, readdir } from 'fs/promises';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { GitResult } from '../src/types/git';
@@ -20,6 +20,34 @@ async function git(repoPath: string, args: string[]): Promise<string> {
     encoding: 'utf8',
   });
   return stdout.trim();
+}
+
+async function isTracked(repoPath: string, filePath: string): Promise<boolean> {
+  try {
+    await git(repoPath, ['ls-files', '--error-unmatch', '--', filePath]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function listWorkspaceFiles(rootPath: string): Promise<string> {
+  const entries: string[] = [];
+  const walk = async (dir: string, prefix = '') => {
+    const dirents = await readdir(dir, { withFileTypes: true });
+    for (const dirent of dirents) {
+      const full = join(dir, dirent.name);
+      const relative = prefix ? `${prefix}/${dirent.name}` : dirent.name;
+      if (dirent.isDirectory()) {
+        entries.push(relative);
+        await walk(full, relative);
+      } else if (dirent.isFile()) {
+        entries.push(relative);
+      }
+    }
+  };
+  await walk(rootPath);
+  return entries.join('\n');
 }
 
 function ok<T = undefined>(data?: T, stdout = ''): GitResult<T> {
@@ -217,6 +245,15 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('git:listFiles', async (_, repoPath: string) => {
+    try {
+      const output = await listWorkspaceFiles(repoPath);
+      return ok(output, output);
+    } catch (e: any) {
+      return fail(['list-workspace-files'], e);
+    }
+  });
+
   // ── git:branches ────────────────────────────────────────────────────────────
   ipcMain.handle('git:branches', async (_, repoPath: string) => {
     try {
@@ -362,12 +399,24 @@ app.whenReady().then(() => {
     try {
       const uniqueFiles = Array.from(new Set((files ?? []).filter(Boolean)));
       if (uniqueFiles.length === 0) return { success: false, error: 'No files provided' };
-      if (options?.cached) {
-        await git(repoPath, ['rm', '--cached', '--', ...uniqueFiles]);
-        return { success: true };
+      const trackedFiles: string[] = [];
+      const skippedFiles: string[] = [];
+      for (const filePath of uniqueFiles) {
+        if (await isTracked(repoPath, filePath)) trackedFiles.push(filePath);
+        else skippedFiles.push(filePath);
       }
-      await git(repoPath, ['rm', '-f', '--', ...uniqueFiles]);
-      return { success: true };
+
+      if (options?.cached && trackedFiles.length === 0) {
+        return { success: false, error: 'File is not tracked by Git' };
+      }
+
+      if (options?.cached) {
+        await git(repoPath, ['rm', '--cached', '--', ...trackedFiles]);
+        return { success: true, stdout: skippedFiles.length > 0 ? `Skipped untracked files: ${skippedFiles.join(', ')}` : '' };
+      }
+      const filesToDelete = trackedFiles.length > 0 ? trackedFiles : uniqueFiles;
+      await git(repoPath, ['rm', '-f', '--', ...filesToDelete]);
+      return { success: true, stdout: skippedFiles.length > 0 ? `Skipped untracked files: ${skippedFiles.join(', ')}` : '' };
     } catch (e: any) {
       return { success: false, error: e.message };
     }

@@ -2,9 +2,7 @@
 const electron = require("electron");
 electron.contextBridge.exposeInMainWorld("electron", {
   platform: process.platform,
-  // Dialog
   openDirectory: () => electron.ipcRenderer.invoke("dialog:openDirectory"),
-  // Git IPC
   git: {
     openRepo: (path) => electron.ipcRenderer.invoke("git:openRepo", path),
     log: (path, maxCount) => electron.ipcRenderer.invoke("git:log", path, maxCount),
@@ -35,7 +33,6 @@ electron.contextBridge.exposeInMainWorld("electron", {
     clone: (url, destination) => electron.ipcRenderer.invoke("git:clone", url, destination),
     stash: (path) => electron.ipcRenderer.invoke("git:stash", path),
     undoCommit: (path) => electron.ipcRenderer.invoke("git:undoCommit", path),
-    // ── New actions ──
     merge: (path, branch, noFF) => electron.ipcRenderer.invoke("git:merge", path, branch, noFF),
     abortMerge: (path) => electron.ipcRenderer.invoke("git:abortMerge", path),
     mergeStatus: (path) => electron.ipcRenderer.invoke("git:mergeStatus", path),
@@ -49,7 +46,6 @@ electron.contextBridge.exposeInMainWorld("electron", {
     reset: (path, mode, target) => electron.ipcRenderer.invoke("git:reset", path, mode, target),
     revert: (path, commitHash) => electron.ipcRenderer.invoke("git:revert", path, commitHash)
   },
-  // Menu → Renderer listeners
   onMenuAction: (cb) => {
     const h = (_, a) => cb(a);
     electron.ipcRenderer.on("menu-action", h);

@@ -23,6 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 const electron = require("electron");
 const path = require("path");
+const promises = require("fs/promises");
 const child_process = require("child_process");
 const util = require("util");
 const execFileAsync = util.promisify(child_process.execFile);
@@ -37,6 +38,32 @@ async function git(repoPath, args) {
     encoding: "utf8"
   });
   return stdout.trim();
+}
+async function isTracked(repoPath, filePath) {
+  try {
+    await git(repoPath, ["ls-files", "--error-unmatch", "--", filePath]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function listWorkspaceFiles(rootPath) {
+  const entries = [];
+  const walk = async (dir, prefix = "") => {
+    const dirents = await promises.readdir(dir, { withFileTypes: true });
+    for (const dirent of dirents) {
+      const full = path.join(dir, dirent.name);
+      const relative = prefix ? `${prefix}/${dirent.name}` : dirent.name;
+      if (dirent.isDirectory()) {
+        entries.push(relative);
+        await walk(full, relative);
+      } else if (dirent.isFile()) {
+        entries.push(relative);
+      }
+    }
+  };
+  await walk(rootPath);
+  return entries.join("\n");
 }
 function ok(data, stdout = "") {
   return { success: true, data, stdout, stderr: "", code: 0 };
@@ -223,6 +250,14 @@ electron.app.whenReady().then(() => {
       return fail(["status", "--porcelain=v1", "-u"], e);
     }
   });
+  electron.ipcMain.handle("git:listFiles", async (_, repoPath) => {
+    try {
+      const output = await listWorkspaceFiles(repoPath);
+      return ok(output, output);
+    } catch (e) {
+      return fail(["list-workspace-files"], e);
+    }
+  });
   electron.ipcMain.handle("git:branches", async (_, repoPath) => {
     try {
       const output = await git(repoPath, [
@@ -337,6 +372,54 @@ electron.app.whenReady().then(() => {
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("fs:deletePath", async (_, paths) => {
+    try {
+      const uniquePaths = Array.from(new Set((paths ?? []).filter(Boolean)));
+      await Promise.all(uniquePaths.map((p) => promises.rm(p, { recursive: true, force: true })));
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:remove", async (_, repoPath, files, options) => {
+    try {
+      const uniqueFiles = Array.from(new Set((files ?? []).filter(Boolean)));
+      if (uniqueFiles.length === 0) return { success: false, error: "No files provided" };
+      const trackedFiles = [];
+      const skippedFiles = [];
+      for (const filePath of uniqueFiles) {
+        if (await isTracked(repoPath, filePath)) trackedFiles.push(filePath);
+        else skippedFiles.push(filePath);
+      }
+      if ((options == null ? void 0 : options.cached) && trackedFiles.length === 0) {
+        return { success: false, error: "File is not tracked by Git" };
+      }
+      if (options == null ? void 0 : options.cached) {
+        await git(repoPath, ["rm", "--cached", "--", ...trackedFiles]);
+        return { success: true, stdout: skippedFiles.length > 0 ? `Skipped untracked files: ${skippedFiles.join(", ")}` : "" };
+      }
+      const filesToDelete = trackedFiles.length > 0 ? trackedFiles : uniqueFiles;
+      await git(repoPath, ["rm", "-f", "--", ...filesToDelete]);
+      return { success: true, stdout: skippedFiles.length > 0 ? `Skipped untracked files: ${skippedFiles.join(", ")}` : "" };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+  electron.ipcMain.handle("git:restore", async (_, repoPath, files) => {
+    try {
+      const uniqueFiles = Array.from(new Set((files ?? []).filter(Boolean)));
+      if (uniqueFiles.length === 0) return { success: false, error: "No files provided" };
+      await git(repoPath, ["restore", "--staged", "--worktree", "--", ...uniqueFiles]);
+      return { success: true };
+    } catch (e) {
+      try {
+        await git(repoPath, ["checkout", "HEAD", "--", ...files ?? []]);
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
     }
   });
   electron.ipcMain.handle("git:commit", async (_, repoPath, message) => {

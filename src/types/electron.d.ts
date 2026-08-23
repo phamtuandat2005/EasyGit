@@ -9,6 +9,7 @@ export interface ElectronGitAPI {
   log: (repoPath: string, maxCount?: number) => Promise<GitResult<string>>;
   diff: (repoPath: string, file?: string) => Promise<GitResult<string>>;
   diffStaged: (repoPath: string, file?: string) => Promise<GitResult<string>>;
+  listFiles: (repoPath: string) => Promise<GitResult<string>>;
   add: (repoPath: string, files: string[]) => Promise<GitResult>;
   reset: (repoPath: string, files: string[]) => Promise<GitResult>;
   remove: (repoPath: string, files: string[], options?: { cached?: boolean }) => Promise<GitResult>;
